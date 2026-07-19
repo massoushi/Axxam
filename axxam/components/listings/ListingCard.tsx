@@ -65,6 +65,24 @@ export default function ListingCard({ item, id, favorites, toggleFavorite, onCar
           </span>
         </div>
         <p className="mt-1 text-[var(--muted)] text-xs">{item.loc}</p>
+        {(item.type === "f1" ||
+          item.type === "f2" ||
+          item.type === "f3" ||
+          item.type === "f4" ||
+          item.type === "f5" ||
+          item.type === "studio" ||
+          item.type === "duplex" ||
+          item.type === "villa") && (
+          <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--gold-deep)]">
+            {item.type === "studio"
+              ? "Studio"
+              : item.type === "villa"
+                ? "Villa"
+                : item.type === "duplex"
+                  ? "Duplex"
+                  : item.type?.toUpperCase()}
+          </p>
+        )}
         <p className="mt-2 text-sm">
           <span className="font-semibold text-[var(--ink)]">{item.price} DZD</span>{" "}
           {item.priceSuffix ? (

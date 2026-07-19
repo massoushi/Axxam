@@ -1,15 +1,29 @@
 export const PROPERTY_TYPES = [
-  { value: "appartement", label: "Appartement" },
-  { value: "villa", label: "Villa" },
-  { value: "studio", label: "Studio" },
-  { value: "maison", label: "Maison / Riad" },
-  { value: "duplex", label: "Duplex" },
-  { value: "immeuble", label: "Immeuble" },
-  { value: "terrain", label: "Terrain" },
-  { value: "local-commercial", label: "Local commercial" },
-  { value: "bureau", label: "Bureau" },
-  { value: "vehicule", label: "Véhicule" },
+  { value: "studio", label: "Studio", bedrooms: 0 },
+  { value: "f1", label: "F1", bedrooms: 1 },
+  { value: "f2", label: "F2", bedrooms: 2 },
+  { value: "f3", label: "F3", bedrooms: 3 },
+  { value: "f4", label: "F4", bedrooms: 4 },
+  { value: "f5", label: "F5+", bedrooms: 5 },
+  { value: "duplex", label: "Duplex", bedrooms: 3 },
+  { value: "villa", label: "Villa", bedrooms: 4 },
+  { value: "maison", label: "Maison / Riad", bedrooms: 3 },
+  { value: "immeuble", label: "Immeuble", bedrooms: 0 },
+  { value: "appartement", label: "Appartement (autre)", bedrooms: 2 },
+  { value: "terrain", label: "Terrain", bedrooms: 0 },
+  { value: "local-commercial", label: "Local commercial", bedrooms: 0 },
+  { value: "bureau", label: "Bureau", bedrooms: 0 },
+  { value: "vehicule", label: "Véhicule", bedrooms: 0 },
 ] as const;
+
+export function propertyTypeLabel(type?: string) {
+  return PROPERTY_TYPES.find((t) => t.value === type)?.label || type || "Bien";
+}
+
+export function suggestedBedroomsForType(type: string) {
+  return PROPERTY_TYPES.find((t) => t.value === type)?.bedrooms ?? 2;
+}
+
 
 export const PROPERTY_CATEGORIES = [
   { value: "bord-de-mer", label: "Bord de mer" },

@@ -68,7 +68,7 @@ export default function PropertyPublishForm({
 
   const [offerPreset, setOfferPreset] = useState("sejour");
   const [name, setName] = useState("");
-  const [type, setType] = useState("appartement");
+  const [type, setType] = useState("f2");
   const [category, setCategory] = useState("autre");
   const [transaction, setTransaction] = useState<TransactionType>("location");
   const [city, setCity] = useState("Alger");
@@ -196,12 +196,44 @@ export default function PropertyPublishForm({
 
           <div>
             <label className={labelClass}>Type de bien *</label>
-            <select className={inputClass} value={type} onChange={(e) => setType(e.target.value)} required>
-              {PROPERTY_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
+            <select
+              className={inputClass}
+              value={type}
+              onChange={(e) => {
+                const next = e.target.value;
+                setType(next);
+                const suggested = PROPERTY_TYPES.find((t) => t.value === next)?.bedrooms;
+                if (suggested != null) setBedrooms(suggested);
+              }}
+              required
+            >
+              <optgroup label="Appartements">
+                {PROPERTY_TYPES.filter((t) =>
+                  ["studio", "f1", "f2", "f3", "f4", "f5", "appartement"].includes(t.value)
+                ).map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Maisons & immeubles">
+                {PROPERTY_TYPES.filter((t) =>
+                  ["duplex", "villa", "maison", "immeuble"].includes(t.value)
+                ).map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Autres">
+                {PROPERTY_TYPES.filter((t) =>
+                  ["terrain", "local-commercial", "bureau", "vehicule"].includes(t.value)
+                ).map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
+              </optgroup>
             </select>
           </div>
 

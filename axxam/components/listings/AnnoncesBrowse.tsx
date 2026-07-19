@@ -9,7 +9,7 @@ import AuthGateModal from "@/components/auth/AuthGateModal";
 import { useFavorites } from "@/hooks/useFavorites";
 import { fetchProperties } from "@/lib/api";
 import { toPublicProperty } from "@/lib/mappers";
-import { ALGERIAN_CITIES, PROPERTY_TYPES } from "@/types/agency";
+import { ALGERIAN_CITIES } from "@/types/agency";
 import type { Property } from "@/types/property";
 
 const inputClass =
@@ -177,11 +177,26 @@ export default function AnnoncesBrowse() {
             <label className="mb-1.5 block text-[11px] font-semibold text-[var(--navy)]">Type</label>
             <select className={inputClass} value={type} onChange={(e) => setType(e.target.value)}>
               <option value="">Tous</option>
-              {PROPERTY_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
+              <optgroup label="Appartements">
+                <option value="studio">Studio</option>
+                <option value="f1">F1</option>
+                <option value="f2">F2</option>
+                <option value="f3">F3</option>
+                <option value="f4">F4</option>
+                <option value="f5">F5+</option>
+              </optgroup>
+              <optgroup label="Maisons">
+                <option value="duplex">Duplex</option>
+                <option value="villa">Villa</option>
+                <option value="maison">Maison</option>
+              </optgroup>
+              <optgroup label="Autres">
+                <option value="terrain">Terrain</option>
+                <option value="vehicule">Véhicule</option>
+                <option value="immeuble">Immeuble</option>
+                <option value="local-commercial">Local commercial</option>
+                <option value="bureau">Bureau</option>
+              </optgroup>
             </select>
           </div>
 
