@@ -1,11 +1,5 @@
-import AdminAgenciesPanel from "@/components/admin/AdminAgenciesPanel";
-import AdminModerationDashboard from "@/components/admin/AdminModerationDashboard";
+import AdminDashboard from "@/components/admin/AdminDashboard";
 
 export default function AdminPage() {
-  return (
-    <>
-      <AdminModerationDashboard />
-      <AdminAgenciesPanel />
-    </>
-  );
+  return <AdminDashboard />;
 }
