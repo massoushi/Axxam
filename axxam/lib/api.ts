@@ -6,6 +6,10 @@ import { getToken } from "@/lib/auth-storage";
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "https://axxam-dz-klai.onrender.com/api";
 
+export function getApiBaseUrl() {
+  return API_URL;
+}
+
 type ApiResponse<T> = {
   success: boolean;
   message?: string;
@@ -15,16 +19,22 @@ type ApiResponse<T> = {
 
 async function request<T>(path: string, init?: RequestInit): Promise<ApiResponse<T>> {
   const token = typeof window !== "undefined" ? getToken() : null;
+  const url = `${API_URL}${path}`;
 
-  const res = await fetch(`${API_URL}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(init?.headers || {}),
-    },
-    cache: "no-store",
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(init?.headers || {}),
+      },
+      cache: "no-store",
+    });
+  } catch {
+    throw new Error(`Impossible de joindre l'API (${API_URL}). Vérifiez le déploiement Render.`);
+  }
 
   let json: ApiResponse<T> & { message?: string };
   try {

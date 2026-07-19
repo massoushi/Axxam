@@ -8,14 +8,24 @@ import { errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
 
+function isAllowedOrigin(origin) {
+  if (!origin) return true;
+  if (env.clientOrigins.includes("*")) return true;
+  if (env.clientOrigins.includes(origin)) return true;
+  // Autorise les fronts Render AXXAM (évite les blocages CORS en prod)
+  try {
+    const host = new URL(origin).hostname;
+    if (host.endsWith(".onrender.com") && host.includes("axxam")) return true;
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
 app.use(
   cors({
     origin(origin, callback) {
-      // Requêtes sans Origin (health checks, curl, same-origin)
-      if (!origin) return callback(null, true);
-      if (env.clientOrigins.includes(origin) || env.clientOrigins.includes("*")) {
-        return callback(null, true);
-      }
+      if (isAllowedOrigin(origin)) return callback(null, true);
       return callback(new Error(`CORS bloqué pour : ${origin}`));
     },
     credentials: true,
