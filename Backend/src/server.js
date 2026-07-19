@@ -31,7 +31,7 @@ async function start() {
   app.listen(env.port, () => {
     console.log(`AXXAM API → http://localhost:${env.port}`);
     console.log(`Environnement : ${env.nodeEnv}`);
-    console.log(`CORS autorisé : ${env.clientUrl}`);
+    console.log(`CORS autorisé : ${env.clientOrigins.join(", ")}`);
   });
 }
 

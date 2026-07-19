@@ -10,7 +10,14 @@ const app = express();
 
 app.use(
   cors({
-    origin: env.clientUrl,
+    origin(origin, callback) {
+      // Requêtes sans Origin (health checks, curl, same-origin)
+      if (!origin) return callback(null, true);
+      if (env.clientOrigins.includes(origin) || env.clientOrigins.includes("*")) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS bloqué pour : ${origin}`));
+    },
     credentials: true,
   })
 );

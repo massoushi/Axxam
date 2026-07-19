@@ -85,7 +85,7 @@ export default function Home() {
           {error && (
             <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {error}
-              <p className="mt-1 text-xs">Vérifiez que l&apos;API tourne sur http://localhost:5000</p>
+            <p className="mt-1 text-xs">Vérifiez la connexion à l&apos;API AXXAM.</p>
             </div>
           )}
 
