@@ -8,7 +8,7 @@ import PropertyModal from "@/components/property/PropertyModal";
 import AuthGateModal from "@/components/auth/AuthGateModal";
 import { useFavorites } from "@/hooks/useFavorites";
 import { fetchProperties } from "@/lib/api";
-import { toPublicProperty } from "@/lib/mappers";
+import { toPublicProperties } from "@/lib/mappers";
 import { ALGERIAN_CITIES } from "@/types/agency";
 import type { Property } from "@/types/property";
 
@@ -57,7 +57,7 @@ export default function AnnoncesBrowse() {
       if (applied.maxPrice) params.maxPrice = applied.maxPrice;
 
       const res = await fetchProperties(params);
-      let data = res.data.map(toPublicProperty);
+      let data = toPublicProperties(res.data);
 
       if (applied.q.trim()) {
         const needle = applied.q.trim().toLowerCase();
@@ -224,7 +224,6 @@ export default function AnnoncesBrowse() {
             >
               <option value="">Tous</option>
               <option value="nuit">Par nuit</option>
-              <option value="jour">Par jour</option>
               <option value="mois">Par mois</option>
               <option value="total">Prix total</option>
             </select>

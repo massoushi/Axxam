@@ -137,7 +137,6 @@ export type TransactionType = "location" | "vente";
 
 export const PRICE_UNITS: { value: PriceUnit; label: string }[] = [
   { value: "nuit", label: "Par nuit" },
-  { value: "jour", label: "Par jour" },
   { value: "mois", label: "Par mois (longue durée)" },
   { value: "total", label: "Prix total (vente)" },
 ];

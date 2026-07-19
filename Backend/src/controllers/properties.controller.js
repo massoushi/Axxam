@@ -44,8 +44,12 @@ export async function listProperties(req, res, next) {
     }
 
     if (type) add("type = ?", String(type).toLowerCase());
+    else add("type <> ?", "vehicule");
     if (category) add("category = ?", String(category).toLowerCase());
-    if (bedrooms) add("bedrooms >= ?", Number(bedrooms));
+    // Anciennes catégories véhicules
+    if (!category) {
+      clauses.push(`(category IS NULL OR category NOT IN ('voiture', 'utilitaire'))`);
+    }    if (bedrooms) add("bedrooms >= ?", Number(bedrooms));
     if (priceUnit) add("price_unit = ?", String(priceUnit));
     if (transaction) add("transaction_type = ?", String(transaction));
     if (status && status !== "all") add("status = ?", String(status));

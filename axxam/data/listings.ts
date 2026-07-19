@@ -55,6 +55,7 @@ export function matchesExploreFilter(
   },
   filter: ExploreFilter | null
 ) {
+  if (item.type === "vehicule") return false;
   if (!filter) return true;
   if (filter.type && item.type !== filter.type) return false;
   if (filter.types?.length && !filter.types.includes(item.type || "")) return false;

@@ -11,7 +11,7 @@ import PropertyModal from "@/components/property/PropertyModal";
 import AuthGateModal from "@/components/auth/AuthGateModal";
 import { useFavorites } from "@/hooks/useFavorites";
 import { fetchActiveProperties } from "@/lib/api";
-import { toPublicProperty } from "@/lib/mappers";
+import { toPublicProperties } from "@/lib/mappers";
 import { EXPLORE_CATEGORIES, matchesExploreFilter } from "@/data/listings";
 import type { Property } from "@/types/property";
 
@@ -30,7 +30,7 @@ export default function Home() {
       try {
         const res = await fetchActiveProperties();
         if (!cancelled) {
-          setListings(res.data.map(toPublicProperty));
+          setListings(toPublicProperties(res.data));
           setError(null);
         }
       } catch (err) {

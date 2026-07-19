@@ -9,7 +9,7 @@ import AuthGateModal from "@/components/auth/AuthGateModal";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useFavorites } from "@/hooks/useFavorites";
 import { fetchFavorites } from "@/lib/api";
-import { toPublicProperty } from "@/lib/mappers";
+import { toPublicProperties } from "@/lib/mappers";
 import type { Property } from "@/types/property";
 
 export default function FavorisPage() {
@@ -35,7 +35,7 @@ export default function FavorisPage() {
       try {
         const res = await fetchFavorites();
         if (!cancelled) {
-          setListings(res.data.map(toPublicProperty));
+          setListings(toPublicProperties(res.data));
           setError(null);
         }
       } catch (err) {

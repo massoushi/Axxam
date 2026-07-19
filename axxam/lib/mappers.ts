@@ -2,7 +2,15 @@ import type { AgencyProperty } from "@/types/agency";
 import type { Property } from "@/types/property";
 import { priceUnitLabel } from "@/data/listings";
 
-/** Convertit un bien API vers le format carte / modal de l'accueil */
+function isVehicle(item: AgencyProperty) {
+  return (
+    item.type === "vehicule" ||
+    item.category === "voiture" ||
+    item.category === "utilitaire"
+  );
+}
+
+/** Convertit un bien API vers le format carte / modal (ignore les voitures) */
 export function toPublicProperty(item: AgencyProperty): Property {
   const priceLabel = Number(item.price).toLocaleString("fr-DZ");
   const suffix = priceUnitLabel(item.priceUnit, item.transaction);
@@ -11,7 +19,6 @@ export function toPublicProperty(item: AgencyProperty): Property {
   if (item.transaction === "vente") dates = "À vendre";
   else if (item.priceUnit === "mois") dates = "Location mensuelle";
   else if (item.type === "terrain") dates = "Terrain";
-  else if (item.priceUnit === "jour") dates = "Location journalière";
 
   return {
     id: item.id,
@@ -40,4 +47,9 @@ export function toPublicProperty(item: AgencyProperty): Property {
     priceUnit: item.priceUnit,
     priceSuffix: suffix,
   };
+}
+
+/** Convertit une liste et exclut toute voiture / véhicule */
+export function toPublicProperties(items: AgencyProperty[]): Property[] {
+  return items.filter((item) => !isVehicle(item)).map(toPublicProperty);
 }
