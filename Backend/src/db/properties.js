@@ -1,4 +1,5 @@
 import { query } from "../config/db.js";
+import { DEMO_PROPERTIES } from "../data/properties.js";
 
 export async function ensurePropertiesTable() {
   await query(`
@@ -40,6 +41,54 @@ export async function ensurePropertiesTable() {
   await query(`CREATE INDEX IF NOT EXISTS idx_properties_agency ON properties (agency_id);`);
   await query(`CREATE INDEX IF NOT EXISTS idx_properties_city ON properties (city);`);
   await query(`CREATE INDEX IF NOT EXISTS idx_properties_status ON properties (status);`);
+
+  await seedDemoProperties();
+}
+
+/** Insère les hébergements d'exemple s'ils n'existent pas encore (sans écraser les vrais). */
+export async function seedDemoProperties() {
+  for (const p of DEMO_PROPERTIES) {
+    await query(
+      `
+      INSERT INTO properties (
+        id, name, city, commune, quartier, loc, price, price_unit, rating, badge,
+        img, images, description, bedrooms, bathrooms, capacity, surface, amenities,
+        host, agency_id, type, category, transaction_type, status, unavailable_dates
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+        $11, $12::jsonb, $13, $14, $15, $16, $17, $18::jsonb,
+        $19, $20, $21, $22, $23, $24, '[]'::jsonb
+      )
+      ON CONFLICT (id) DO NOTHING
+      `,
+      [
+        p.id,
+        p.name,
+        p.city,
+        p.commune || "",
+        p.quartier || "",
+        p.loc,
+        p.price,
+        p.priceUnit || "nuit",
+        p.rating || "—",
+        p.badge,
+        p.img,
+        JSON.stringify(p.images || [p.img]),
+        p.description || "",
+        p.bedrooms || 0,
+        p.bathrooms || 0,
+        p.capacity || 1,
+        p.surface || 0,
+        JSON.stringify(p.amenities || []),
+        p.host || "AXXAM Démo",
+        p.agencyId || "agence-demo",
+        p.type,
+        p.category || "autre",
+        p.transaction || "location",
+        p.status || "active",
+      ]
+    );
+  }
 }
 
 function normalizeDates(value) {

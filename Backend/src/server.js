@@ -16,7 +16,7 @@ async function start() {
     const ping = await pool.query("SELECT NOW() AS now");
     console.log(`PostgreSQL OK → ${ping.rows[0].now}`);
     await ensurePropertiesTable();
-    console.log("Table properties prête");
+    console.log("Table properties prête (annonces démo seedées si besoin)");
     await ensureUsersTable();
     console.log("Table users prête (admin seed si besoin)");
     await ensureBookingsTable();
