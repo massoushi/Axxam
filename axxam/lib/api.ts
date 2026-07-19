@@ -3,8 +3,7 @@ import type { AuthUser, RegisterPayload, UpdateProfilePayload } from "@/types/au
 import type { Booking, BookingStatus, CreateBookingPayload } from "@/types/booking";
 import { getToken } from "@/lib/auth-storage";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://axxam-dz-klai.onrender.com/api";
+const API_URL = "https://axxam-dz-klai.onrender.com/api";
 
 export function getApiBaseUrl() {
   return API_URL;
