@@ -67,7 +67,11 @@ export default function ListingCard({ item, id, favorites, toggleFavorite, onCar
         <p className="mt-1 text-[var(--muted)] text-xs">{item.loc}</p>
         <p className="mt-2 text-sm">
           <span className="font-semibold text-[var(--ink)]">{item.price} DZD</span>{" "}
-          <span className="text-[var(--muted)]">/ nuit</span>
+          {item.priceSuffix ? (
+            <span className="text-[var(--muted)]">{item.priceSuffix}</span>
+          ) : item.transaction === "vente" ? (
+            <span className="text-[var(--muted)]">à l&apos;achat</span>
+          ) : null}
         </p>
       </div>
     </article>

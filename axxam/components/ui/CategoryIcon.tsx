@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { CategoryIconId } from "@/types/property";
 
 const PATHS: Record<CategoryIconId, ReactNode> = {
+  all: <path d="M4 6h16M4 12h16M4 18h16" />,
   villa: <path d="M4 11L12 4l8 7M6 10v9a1 1 0 001 1h4v-6h2v6h4a1 1 0 001-1v-9" />,
   sea: <path d="M3 17c1.5 1.3 3 1.3 4.5 0s3-1.3 4.5 0 3 1.3 4.5 0 3-1.3 4.5 0M5 13l4-7 3 4 2-3 5 6" />,
   pool: <path d="M4 19c1.4 1.2 2.8 1.2 4.2 0s2.8-1.2 4.2 0 2.8 1.2 4.2 0 2.8-1.2 4.2 0M7 15V6a2 2 0 012-2h6a2 2 0 012 2v9" />,
@@ -10,6 +11,24 @@ const PATHS: Record<CategoryIconId, ReactNode> = {
   mountain: <path d="M2 20l6-10 4 6 3-4 7 8H2z" />,
   luxury: <path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4.5L6 21l1.5-7.5L2 9h7z" />,
   business: <path d="M4 21V9a2 2 0 012-2h3V4a2 2 0 012-2h2a2 2 0 012 2v3h3a2 2 0 012 2v12M9 21v-4h6v4" />,
+  night: (
+    <>
+      <path d="M12 3a6 6 0 106 6 9 9 0 01-9-9z" />
+      <path d="M19 3v4M21 5h-4" />
+    </>
+  ),
+  calendar: (
+    <>
+      <path d="M8 3v3M16 3v3M4 9h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z" />
+    </>
+  ),
+  key: <path d="M15 7a4 4 0 11-3.9 5H3v3h2v2h2v-2h2.1A4 4 0 1115 7zm0 2a2 2 0 100 4 2 2 0 000-4z" />,
+  land: <path d="M3 19h18M5 19V9l7-5 7 5v10M9 19v-5h6v5" />,
+  car: (
+    <>
+      <path d="M5 16l1.5-5.5A2 2 0 018.4 9h7.2a2 2 0 011.9 1.5L19 16M5 16h14M7 19a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm10 0a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
+    </>
+  ),
 };
 
 type CategoryIconProps = {
@@ -17,5 +36,5 @@ type CategoryIconProps = {
 };
 
 export default function CategoryIcon({ id }: CategoryIconProps) {
-  return <>{PATHS[id]}</>;
+  return <>{PATHS[id] || PATHS.all}</>;
 }

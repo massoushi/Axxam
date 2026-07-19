@@ -78,12 +78,10 @@ export default function NotificationsBell() {
                 ? "Réservation confirmée"
                 : b.status === "cancelled"
                   ? "Réservation annulée"
-                  : b.status === "rejected"
-                    ? "Réservation refusée"
-                    : BOOKING_STATUS_LABELS[b.status] || "Mise à jour",
+                  : BOOKING_STATUS_LABELS[b.status] || "Mise à jour",
             body: `${b.propertyName || "Bien"} · ${formatDayFr(b.checkIn)} → ${formatDayFr(b.checkOut)}`,
             href: "/compte/reservations",
-            urgent: b.status === "confirmed" || b.status === "rejected",
+            urgent: b.status === "confirmed" || b.status === "cancelled",
           });
         });
       }

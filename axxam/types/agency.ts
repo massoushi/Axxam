@@ -8,6 +8,7 @@ export const PROPERTY_TYPES = [
   { value: "terrain", label: "Terrain" },
   { value: "local-commercial", label: "Local commercial" },
   { value: "bureau", label: "Bureau" },
+  { value: "vehicule", label: "Véhicule" },
 ] as const;
 
 export const PROPERTY_CATEGORIES = [
@@ -18,6 +19,10 @@ export const PROPERTY_CATEGORIES = [
   { value: "montagne", label: "Montagne" },
   { value: "affaires", label: "Séjour d'affaires" },
   { value: "famille", label: "Famille" },
+  { value: "urbain", label: "Terrain urbain" },
+  { value: "agricole", label: "Terrain agricole" },
+  { value: "voiture", label: "Voiture" },
+  { value: "utilitaire", label: "Utilitaire / 4x4" },
   { value: "autre", label: "Autre" },
 ] as const;
 
@@ -100,8 +105,55 @@ export const AMENITY_OPTIONS = [
   "Cave",
 ] as const;
 
-export type PriceUnit = "nuit" | "mois";
+export type PriceUnit = "nuit" | "mois" | "jour" | "total";
 export type TransactionType = "location" | "vente";
+
+export const PRICE_UNITS: { value: PriceUnit; label: string }[] = [
+  { value: "nuit", label: "Par nuit" },
+  { value: "jour", label: "Par jour" },
+  { value: "mois", label: "Par mois (longue durée)" },
+  { value: "total", label: "Prix total (vente)" },
+];
+
+export const OFFER_PRESETS: {
+  id: string;
+  label: string;
+  hint: string;
+  transaction: TransactionType;
+  priceUnit: PriceUnit;
+  defaultType?: string;
+}[] = [
+  {
+    id: "sejour",
+    label: "Séjour / à la nuit",
+    hint: "Hébergement court séjour",
+    transaction: "location",
+    priceUnit: "nuit",
+  },
+  {
+    id: "longue",
+    label: "Location longue durée",
+    hint: "Bail mensuel",
+    transaction: "location",
+    priceUnit: "mois",
+  },
+  {
+    id: "vente",
+    label: "Vente",
+    hint: "Bien à acheter",
+    transaction: "vente",
+    priceUnit: "total",
+  },
+  {
+    id: "vehicule",
+    label: "Véhicule",
+    hint: "Location ou vente auto",
+    transaction: "location",
+    priceUnit: "jour",
+    defaultType: "vehicule",
+  },
+];
+
 export type PropertyStatus =
   | "pending"
   | "active"

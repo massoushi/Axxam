@@ -1,15 +1,24 @@
 import type { AgencyProperty } from "@/types/agency";
 import type { Property } from "@/types/property";
+import { priceUnitLabel } from "@/data/listings";
 
 /** Convertit un bien API vers le format carte / modal de l'accueil */
 export function toPublicProperty(item: AgencyProperty): Property {
   const priceLabel = Number(item.price).toLocaleString("fr-DZ");
+  const suffix = priceUnitLabel(item.priceUnit, item.transaction);
+
+  let dates = "Séjour";
+  if (item.transaction === "vente") dates = "À vendre";
+  else if (item.priceUnit === "mois") dates = "Location mensuelle";
+  else if (item.priceUnit === "jour") dates = "Location journalière";
+  else if (item.type === "vehicule") dates = "Véhicule";
+  else if (item.type === "terrain") dates = "Terrain";
 
   return {
     id: item.id,
     name: item.name,
     loc: item.loc,
-    dates: item.priceUnit === "mois" ? "Location mensuelle" : "Séjour",
+    dates,
     price: priceLabel,
     total: priceLabel,
     rating: item.rating && item.rating !== "—" ? item.rating : "Nouveau",
@@ -26,5 +35,10 @@ export function toPublicProperty(item: AgencyProperty): Property {
     unavailableDates: item.unavailableDates || [],
     images: item.images?.length ? item.images : [item.img],
     reviews: [],
+    type: item.type,
+    category: item.category,
+    transaction: item.transaction,
+    priceUnit: item.priceUnit,
+    priceSuffix: suffix,
   };
 }

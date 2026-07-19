@@ -22,6 +22,8 @@ export default function AnnoncesBrowse() {
   const [city, setCity] = useState(searchParams.get("city") || "");
   const [type, setType] = useState(searchParams.get("type") || "");
   const [transaction, setTransaction] = useState(searchParams.get("transaction") || "");
+  const [priceUnit, setPriceUnit] = useState(searchParams.get("priceUnit") || "");
+  const [category, setCategory] = useState(searchParams.get("category") || "");
   const [minPrice, setMinPrice] = useState(searchParams.get("minPrice") || "");
   const [maxPrice, setMaxPrice] = useState(searchParams.get("maxPrice") || "");
   const [q, setQ] = useState(searchParams.get("q") || "");
@@ -30,6 +32,8 @@ export default function AnnoncesBrowse() {
     city: searchParams.get("city") || "",
     type: searchParams.get("type") || "",
     transaction: searchParams.get("transaction") || "",
+    priceUnit: searchParams.get("priceUnit") || "",
+    category: searchParams.get("category") || "",
     minPrice: searchParams.get("minPrice") || "",
     maxPrice: searchParams.get("maxPrice") || "",
     q: searchParams.get("q") || "",
@@ -47,6 +51,8 @@ export default function AnnoncesBrowse() {
       if (applied.city) params.city = applied.city;
       if (applied.type) params.type = applied.type;
       if (applied.transaction) params.transaction = applied.transaction;
+      if (applied.priceUnit) params.priceUnit = applied.priceUnit;
+      if (applied.category) params.category = applied.category;
       if (applied.minPrice) params.minPrice = applied.minPrice;
       if (applied.maxPrice) params.maxPrice = applied.maxPrice;
 
@@ -91,6 +97,8 @@ export default function AnnoncesBrowse() {
         applied.city ||
           applied.type ||
           applied.transaction ||
+          applied.priceUnit ||
+          applied.category ||
           applied.minPrice ||
           applied.maxPrice ||
           applied.q
@@ -100,17 +108,28 @@ export default function AnnoncesBrowse() {
 
   const applyFilters = (e?: React.FormEvent) => {
     e?.preventDefault();
-    setApplied({ city, type, transaction, minPrice, maxPrice, q });
+    setApplied({ city, type, transaction, priceUnit, category, minPrice, maxPrice, q });
   };
 
   const resetFilters = () => {
     setCity("");
     setType("");
     setTransaction("");
+    setPriceUnit("");
+    setCategory("");
     setMinPrice("");
     setMaxPrice("");
     setQ("");
-    setApplied({ city: "", type: "", transaction: "", minPrice: "", maxPrice: "", q: "" });
+    setApplied({
+      city: "",
+      type: "",
+      transaction: "",
+      priceUnit: "",
+      category: "",
+      minPrice: "",
+      maxPrice: "",
+      q: "",
+    });
   };
 
   return (
@@ -176,6 +195,21 @@ export default function AnnoncesBrowse() {
               <option value="">Toutes</option>
               <option value="location">Location</option>
               <option value="vente">Vente</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-[11px] font-semibold text-[var(--navy)]">Tarif</label>
+            <select
+              className={inputClass}
+              value={priceUnit}
+              onChange={(e) => setPriceUnit(e.target.value)}
+            >
+              <option value="">Tous</option>
+              <option value="nuit">Par nuit</option>
+              <option value="jour">Par jour</option>
+              <option value="mois">Par mois</option>
+              <option value="total">Prix total</option>
             </select>
           </div>
 

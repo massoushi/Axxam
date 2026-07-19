@@ -1,4 +1,5 @@
 export type CategoryIconId =
+  | "all"
   | "villa"
   | "sea"
   | "pool"
@@ -6,7 +7,12 @@ export type CategoryIconId =
   | "riad"
   | "mountain"
   | "luxury"
-  | "business";
+  | "business"
+  | "night"
+  | "calendar"
+  | "key"
+  | "land"
+  | "car";
 
 export type Category = {
   label: string;
@@ -43,10 +49,14 @@ export type Property = {
   host: string;
   hostImage: string;
   availability: AvailabilitySlot[];
-  /** Jours ISO YYYY-MM-DD non disponibles */
   unavailableDates?: string[];
   images: string[];
   reviews: Review[];
+  type?: string;
+  category?: string;
+  transaction?: string;
+  priceUnit?: string;
+  priceSuffix?: string;
 };
 
 export type ListingSection = {

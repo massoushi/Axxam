@@ -7,6 +7,8 @@ import { publishProperty } from "@/lib/api";
 import {
   ALGERIAN_CITIES,
   AMENITY_OPTIONS,
+  OFFER_PRESETS,
+  PRICE_UNITS,
   PROPERTY_CATEGORIES,
   PROPERTY_TYPES,
   type PriceUnit,
@@ -64,6 +66,7 @@ export default function PropertyPublishForm({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  const [offerPreset, setOfferPreset] = useState("sejour");
   const [name, setName] = useState("");
   const [type, setType] = useState("appartement");
   const [category, setCategory] = useState("autre");
@@ -80,6 +83,18 @@ export default function PropertyPublishForm({
   const [description, setDescription] = useState("");
   const [amenities, setAmenities] = useState<string[]>([]);
   const [images, setImages] = useState<string[]>([]);
+
+  const applyPreset = (presetId: string) => {
+    const preset = OFFER_PRESETS.find((p) => p.id === presetId);
+    if (!preset) return;
+    setOfferPreset(presetId);
+    setTransaction(preset.transaction);
+    setPriceUnit(preset.priceUnit);
+    if (preset.defaultType) {
+      setType(preset.defaultType);
+      if (preset.defaultType === "vehicule") setCategory("voiture");
+    }
+  };
 
   const toggleAmenity = (item: string) => {
     setAmenities((prev) => (prev.includes(item) ? prev.filter((a) => a !== item) : [...prev, item]));
@@ -127,6 +142,42 @@ export default function PropertyPublishForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-8">
+      <section className="rounded-2xl border border-black/5 bg-white p-5 sm:p-6">
+        <h2 className="font-display text-2xl font-semibold text-[var(--navy)]">Type d&apos;offre</h2>
+        <p className="mt-1 text-sm text-[var(--muted)]">
+          Choisissez d&apos;abord ce que vous proposez — le formulaire s&apos;adapte automatiquement.
+        </p>
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {OFFER_PRESETS.map((preset) => (
+            <button
+              key={preset.id}
+              type="button"
+              onClick={() => applyPreset(preset.id)}
+              className={`rounded-2xl border px-4 py-4 text-left transition-colors ${
+                offerPreset === preset.id
+                  ? "border-[var(--gold)] bg-[var(--navy)] text-white"
+                  : "border-black/10 bg-white hover:border-[var(--gold)]/50"
+              }`}
+            >
+              <p
+                className={`text-sm font-semibold ${
+                  offerPreset === preset.id ? "text-[var(--gold)]" : "text-[var(--navy)]"
+                }`}
+              >
+                {preset.label}
+              </p>
+              <p
+                className={`mt-1 text-xs ${
+                  offerPreset === preset.id ? "text-white/60" : "text-[var(--muted)]"
+                }`}
+              >
+                {preset.hint}
+              </p>
+            </button>
+          ))}
+        </div>
+      </section>
+
       <section className="rounded-2xl border border-black/5 bg-white p-5 sm:p-6">
         <h2 className="font-display text-2xl font-semibold text-[var(--navy)]">Informations générales</h2>
         <p className="mt-1 text-sm text-[var(--muted)]">Titre, type et classification du bien</p>
@@ -285,19 +336,19 @@ export default function PropertyPublishForm({
           </div>
           <div>
             <label className={labelClass}>Unité de prix *</label>
-            <div className="flex gap-2">
-              {(["nuit", "mois"] as const).map((unit) => (
+            <div className="grid grid-cols-2 gap-2">
+              {PRICE_UNITS.map((unit) => (
                 <button
-                  key={unit}
+                  key={unit.value}
                   type="button"
-                  onClick={() => setPriceUnit(unit)}
-                  className={`flex-1 rounded-xl border px-3 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors ${
-                    priceUnit === unit
+                  onClick={() => setPriceUnit(unit.value)}
+                  className={`rounded-xl border px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-colors ${
+                    priceUnit === unit.value
                       ? "border-[var(--gold)] bg-[var(--navy)] text-[var(--gold)]"
                       : "border-black/10 bg-white text-[var(--muted)] hover:border-[var(--gold)]/50"
                   }`}
                 >
-                  / {unit}
+                  {unit.label}
                 </button>
               ))}
             </div>

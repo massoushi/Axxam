@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import Categories from "@/components/home/Categories";
 import Hero from "@/components/home/Hero";
 import PromoBanner from "@/components/home/PromoBanner";
@@ -11,10 +12,11 @@ import AuthGateModal from "@/components/auth/AuthGateModal";
 import { useFavorites } from "@/hooks/useFavorites";
 import { fetchActiveProperties } from "@/lib/api";
 import { toPublicProperty } from "@/lib/mappers";
+import { EXPLORE_CATEGORIES, matchesExploreFilter } from "@/data/listings";
 import type { Property } from "@/types/property";
 
 export default function Home() {
-  const [activeCategory, setActiveCategory] = useState(0);
+  const [activeId, setActiveId] = useState("all");
   const { favorites, toggleFavorite, authRequired, clearAuthGate } = useFavorites();
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [listings, setListings] = useState<Property[]>([]);
@@ -46,38 +48,55 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (selectedProperty) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    if (selectedProperty) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
     return () => {
       document.body.style.overflow = "";
     };
   }, [selectedProperty]);
 
+  const activeCat = EXPLORE_CATEGORIES.find((c) => c.id === activeId) || EXPLORE_CATEGORIES[0];
+
+  const filtered = useMemo(
+    () => listings.filter((item) => matchesExploreFilter(item, activeCat.filter)),
+    [listings, activeCat]
+  );
+
   return (
     <SiteShell>
       <div className="text-[var(--ink)]">
         <Hero />
-        <Categories active={activeCategory} setActive={setActiveCategory} />
+        <Categories activeId={activeId} onSelect={(cat) => setActiveId(cat.id)} />
 
         <section className="container mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-12">
-          <div className="mb-8 flex items-end justify-between gap-4">
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[var(--gold-deep)]">
                 Annonces vérifiées
               </p>
               <h2 className="mt-2 font-display text-3xl sm:text-4xl font-semibold text-[var(--navy)]">
-                Biens disponibles en Algérie
+                {activeCat.id === "all" ? "Biens disponibles en Algérie" : activeCat.label}
               </h2>
+              {!loading && (
+                <p className="mt-1 text-sm text-[var(--muted)]">
+                  {filtered.length} résultat{filtered.length !== 1 ? "s" : ""}
+                </p>
+              )}
             </div>
-            <a
-              href="/favoris"
-              className="shrink-0 text-xs font-semibold text-[var(--navy)] hover:text-[var(--gold-deep)] transition-colors"
-            >
-              Mes favoris →
-            </a>
+            <div className="flex items-center gap-4">
+              <Link
+                href="/annonces"
+                className="text-xs font-semibold text-[var(--navy)] hover:text-[var(--gold-deep)] transition-colors"
+              >
+                Recherche avancée →
+              </Link>
+              <Link
+                href="/favoris"
+                className="text-xs font-semibold text-[var(--navy)] hover:text-[var(--gold-deep)] transition-colors"
+              >
+                Mes favoris →
+              </Link>
+            </div>
           </div>
 
           {loading && <p className="text-sm text-[var(--muted)]">Chargement des annonces...</p>}
@@ -88,18 +107,25 @@ export default function Home() {
             </div>
           )}
 
-          {!loading && !error && listings.length === 0 && (
+          {!loading && !error && filtered.length === 0 && (
             <div className="rounded-2xl border border-dashed border-[var(--navy)]/15 bg-white px-6 py-16 text-center">
-              <p className="font-display text-2xl text-[var(--navy)]">Aucune annonce publiée pour le moment</p>
+              <p className="font-display text-2xl text-[var(--navy)]">Aucun bien dans cette catégorie</p>
               <p className="mt-2 text-sm text-[var(--muted)]">
-                Les biens apparaîtront ici après validation par un administrateur.
+                Essayez une autre catégorie ou consultez toutes les annonces.
               </p>
+              <button
+                type="button"
+                onClick={() => setActiveId("all")}
+                className="mt-6 inline-flex rounded-full bg-[var(--gold)] px-5 py-2.5 text-xs font-bold uppercase text-[var(--navy)]"
+              >
+                Voir tout
+              </button>
             </div>
           )}
 
-          {listings.length > 0 && (
+          {filtered.length > 0 && (
             <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {listings.map((item) => (
+              {filtered.map((item) => (
                 <ListingCard
                   key={item.id}
                   item={item}

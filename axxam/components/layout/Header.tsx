@@ -10,8 +10,16 @@ import { useAuth } from "@/components/auth/AuthProvider";
 
 const navItems = [
   { href: "/", label: "Accueil", match: (p: string) => p === "/" },
-  { href: "/annonces", label: "Hébergements", match: (p: string) => p.startsWith("/annonces") },
-  { href: "/annonces", label: "Immobilier", match: () => false },
+  {
+    href: "/annonces?transaction=location&priceUnit=nuit",
+    label: "Hébergements",
+    match: (p: string) => p.startsWith("/annonces"),
+  },
+  {
+    href: "/annonces?transaction=vente",
+    label: "Immobilier",
+    match: () => false,
+  },
   { href: "/favoris", label: "Favoris", match: (p: string) => p.startsWith("/favoris") },
 ];
 
