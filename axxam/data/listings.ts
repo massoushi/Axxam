@@ -34,7 +34,6 @@ export const EXPLORE_CATEGORIES: ExploreCategory[] = [
   { id: "maison", label: "Maisons", icon: "riad", filter: { type: "maison" } },
   { id: "piscine", label: "Avec piscine", icon: "pool", filter: { category: "piscine-privee" } },
   { id: "terrain", label: "Terrains", icon: "land", filter: { type: "terrain" } },
-  { id: "vehicule", label: "Véhicules", icon: "car", filter: { type: "vehicule" } },
   { id: "nuit", label: "À la nuit", icon: "night", filter: { transaction: "location", priceUnit: "nuit" } },
   { id: "mois", label: "Longue durée", icon: "calendar", filter: { transaction: "location", priceUnit: "mois" } },
   { id: "vente", label: "À vendre", icon: "key", filter: { transaction: "vente" } },

@@ -195,7 +195,6 @@ export default function AnnoncesBrowse() {
               </optgroup>
               <optgroup label="Autres">
                 <option value="terrain">Terrain</option>
-                <option value="vehicule">Véhicule</option>
                 <option value="immeuble">Immeuble</option>
                 <option value="local-commercial">Local commercial</option>
                 <option value="bureau">Bureau</option>

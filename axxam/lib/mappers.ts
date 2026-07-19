@@ -10,9 +10,8 @@ export function toPublicProperty(item: AgencyProperty): Property {
   let dates = "Séjour";
   if (item.transaction === "vente") dates = "À vendre";
   else if (item.priceUnit === "mois") dates = "Location mensuelle";
-  else if (item.priceUnit === "jour") dates = "Location journalière";
-  else if (item.type === "vehicule") dates = "Véhicule";
   else if (item.type === "terrain") dates = "Terrain";
+  else if (item.priceUnit === "jour") dates = "Location journalière";
 
   return {
     id: item.id,

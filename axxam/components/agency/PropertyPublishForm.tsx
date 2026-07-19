@@ -88,7 +88,7 @@ export default function PropertyPublishForm({
   const [amenities, setAmenities] = useState<string[]>([]);
   const [images, setImages] = useState<string[]>([]);
 
-  const isHousingType = !["terrain", "vehicule", "local-commercial", "bureau", "immeuble"].includes(type);
+  const isHousingType = !["terrain", "local-commercial", "bureau", "immeuble"].includes(type);
 
   const applyPreset = (presetId: string) => {
     const preset = OFFER_PRESETS.find((p) => p.id === presetId);
@@ -100,10 +100,6 @@ export default function PropertyPublishForm({
       setType(preset.defaultType);
       const suggested = PROPERTY_TYPES.find((t) => t.value === preset.defaultType)?.bedrooms;
       if (suggested != null) setBedrooms(suggested);
-      if (preset.defaultType === "vehicule") {
-        setCategory("voiture");
-        setHasPool("na");
-      }
       if (preset.defaultType === "terrain") {
         setHasPool("na");
       }
@@ -114,10 +110,9 @@ export default function PropertyPublishForm({
     setType(next);
     const meta = PROPERTY_TYPES.find((t) => t.value === next);
     if (meta) setBedrooms(meta.bedrooms);
-    if (["terrain", "vehicule", "local-commercial", "bureau"].includes(next)) {
+    if (["terrain", "local-commercial", "bureau"].includes(next)) {
       setHasPool("na");
       if (next === "terrain") setCategory("urbain");
-      if (next === "vehicule") setCategory("voiture");
     } else if (hasPool === "na" || !hasPool) {
       setHasPool("");
     }
@@ -337,7 +332,7 @@ export default function PropertyPublishForm({
               <label className={labelClass}>Ambiance / emplacement</label>
               <select className={inputClass} value={category} onChange={(e) => setCategory(e.target.value)}>
                 {PROPERTY_CATEGORIES.filter(
-                  (c) => !["voiture", "utilitaire", "urbain", "agricole"].includes(c.value)
+                  (c) => !["urbain", "agricole"].includes(c.value)
                 ).map((c) => (
                   <option key={c.value} value={c.value}>
                     {c.label}

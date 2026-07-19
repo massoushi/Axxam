@@ -11,8 +11,7 @@ export type CategoryIconId =
   | "night"
   | "calendar"
   | "key"
-  | "land"
-  | "car";
+  | "land";
 
 export type Category = {
   label: string;

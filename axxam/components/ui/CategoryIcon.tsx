@@ -24,11 +24,6 @@ const PATHS: Record<CategoryIconId, ReactNode> = {
   ),
   key: <path d="M15 7a4 4 0 11-3.9 5H3v3h2v2h2v-2h2.1A4 4 0 1115 7zm0 2a2 2 0 100 4 2 2 0 000-4z" />,
   land: <path d="M3 19h18M5 19V9l7-5 7 5v10M9 19v-5h6v5" />,
-  car: (
-    <>
-      <path d="M5 16l1.5-5.5A2 2 0 018.4 9h7.2a2 2 0 011.9 1.5L19 16M5 16h14M7 19a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm10 0a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
-    </>
-  ),
 };
 
 type CategoryIconProps = {

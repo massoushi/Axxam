@@ -15,13 +15,12 @@ export const PROPERTY_TYPES = [
   { value: "terrain", label: "Terrain", bedrooms: 0, group: "autres" },
   { value: "local-commercial", label: "Local commercial", bedrooms: 0, group: "autres" },
   { value: "bureau", label: "Bureau", bedrooms: 0, group: "autres" },
-  { value: "vehicule", label: "Véhicule", bedrooms: 0, group: "autres" },
 ] as const;
 
 export const PROPERTY_TYPE_GROUPS = [
   { id: "appartements", label: "Appartements (Studio → F8)" },
   { id: "maisons", label: "Villas, duplex & maisons" },
-  { id: "autres", label: "Terrain, local & véhicule" },
+  { id: "autres", label: "Terrain & locaux" },
 ] as const;
 
 export type PoolOption = "avec-piscine" | "sans-piscine" | "na";
@@ -29,7 +28,7 @@ export type PoolOption = "avec-piscine" | "sans-piscine" | "na";
 export const POOL_OPTIONS: { value: PoolOption; label: string; hint: string }[] = [
   { value: "avec-piscine", label: "Avec piscine", hint: "Piscine privée ou partagée" },
   { value: "sans-piscine", label: "Sans piscine", hint: "Pas de piscine" },
-  { value: "na", label: "Non concerné", hint: "Terrain, véhicule, local…" },
+  { value: "na", label: "Non concerné", hint: "Terrain, local commercial…" },
 ];
 
 export function propertyTypeLabel(type?: string) {
@@ -51,8 +50,6 @@ export const PROPERTY_CATEGORIES = [
   { value: "famille", label: "Famille" },
   { value: "urbain", label: "Terrain urbain" },
   { value: "agricole", label: "Terrain agricole" },
-  { value: "voiture", label: "Voiture" },
-  { value: "utilitaire", label: "Utilitaire / 4x4" },
   { value: "autre", label: "Autre" },
 ] as const;
 
@@ -173,14 +170,6 @@ export const OFFER_PRESETS: {
     hint: "Bien à acheter",
     transaction: "vente",
     priceUnit: "total",
-  },
-  {
-    id: "vehicule",
-    label: "Véhicule",
-    hint: "Location ou vente auto",
-    transaction: "location",
-    priceUnit: "jour",
-    defaultType: "vehicule",
   },
 ];
 

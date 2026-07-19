@@ -47,6 +47,8 @@ export async function ensurePropertiesTable() {
 
 /** Insère les hébergements d'exemple s'ils n'existent pas encore (sans écraser les vrais). */
 export async function seedDemoProperties() {
+  await query(`DELETE FROM properties WHERE type = 'vehicule' OR id LIKE 'demo-voiture%' OR id LIKE 'demo-4x4%'`);
+
   for (const p of DEMO_PROPERTIES) {
     await query(
       `

@@ -34,7 +34,7 @@ export default function Categories({ activeId, onSelect }: CategoriesProps) {
               Que recherchez-vous ?
             </h2>
             <p className="mt-2 max-w-xl text-sm text-[var(--muted)]">
-              Séjours à la nuit, location longue durée, biens à vendre, terrains ou véhicules.
+              Séjours à la nuit, location longue durée, biens à vendre ou terrains.
             </p>
           </div>
           <Link
