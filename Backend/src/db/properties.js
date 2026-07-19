@@ -59,7 +59,29 @@ export async function seedDemoProperties() {
         $11, $12::jsonb, $13, $14, $15, $16, $17, $18::jsonb,
         $19, $20, $21, $22, $23, $24, '[]'::jsonb
       )
-      ON CONFLICT (id) DO NOTHING
+      ON CONFLICT (id) DO UPDATE SET
+        name = EXCLUDED.name,
+        city = EXCLUDED.city,
+        commune = EXCLUDED.commune,
+        quartier = EXCLUDED.quartier,
+        loc = EXCLUDED.loc,
+        price = EXCLUDED.price,
+        price_unit = EXCLUDED.price_unit,
+        rating = EXCLUDED.rating,
+        badge = EXCLUDED.badge,
+        img = EXCLUDED.img,
+        images = EXCLUDED.images,
+        description = EXCLUDED.description,
+        bedrooms = EXCLUDED.bedrooms,
+        bathrooms = EXCLUDED.bathrooms,
+        capacity = EXCLUDED.capacity,
+        surface = EXCLUDED.surface,
+        amenities = EXCLUDED.amenities,
+        type = EXCLUDED.type,
+        category = EXCLUDED.category,
+        transaction_type = EXCLUDED.transaction_type,
+        status = EXCLUDED.status
+      WHERE properties.agency_id = 'agence-demo'
       `,
       [
         p.id,

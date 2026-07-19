@@ -143,9 +143,9 @@ export default function AnnoncesBrowse() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-[11px] font-semibold text-[var(--navy)]">Ville</label>
+            <label className="mb-1.5 block text-[11px] font-semibold text-[var(--navy)]">Wilaya</label>
             <select className={inputClass} value={city} onChange={(e) => setCity(e.target.value)}>
-              <option value="">Toutes</option>
+              <option value="">Toutes les wilayas</option>
               {ALGERIAN_CITIES.map((c) => (
                 <option key={c} value={c}>
                   {c}

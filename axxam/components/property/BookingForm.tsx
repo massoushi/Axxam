@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import PropertyImage from "@/components/ui/PropertyImage";
 import Link from "next/link";
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import type { Property } from "@/types/property";
@@ -198,7 +198,7 @@ export default function BookingForm({
           <div className="p-6">
             <div className="flex items-center gap-4 mb-6 pb-6 border-b border-gray-100">
               <div className="relative w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
-                <Image src={property.img} alt={property.name} fill className="object-cover" />
+                <PropertyImage src={property.img} alt={property.name} fill className="object-cover" />
               </div>
               <div>
                 <h3 className="font-serif font-bold text-[#0F1E2C] text-lg">{property.name}</h3>

@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import PropertyImage from "@/components/ui/PropertyImage";
 import { useState } from "react";
 import type { Property } from "@/types/property";
 import BookingForm from "@/components/property/BookingForm";
@@ -58,7 +58,7 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
 
             <div className="p-6">
               <div className="relative aspect-[16/9] rounded-xl overflow-hidden bg-gray-100 mb-6">
-                <Image
+                <PropertyImage
                   src={property.images[currentImageIndex] || property.img}
                   alt={property.name}
                   fill

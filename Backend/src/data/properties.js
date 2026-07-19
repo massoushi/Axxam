@@ -469,10 +469,10 @@ export const DEMO_PROPERTIES = [
   {
     id: "demo-villa-boumerdes",
     name: "Villa Zeralda",
-    city: "Boumerdès",
+    city: "Alger",
     commune: "Zeralda",
     quartier: "Côte",
-    loc: "Zeralda, Algérie",
+    loc: "Zeralda, Alger, Algérie",
     price: 23000,
     priceUnit: "nuit",
     rating: "4.6",

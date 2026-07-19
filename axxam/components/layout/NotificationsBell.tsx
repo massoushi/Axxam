@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { fetchHostBookings, fetchMyBookings } from "@/lib/api";
+import {
+  fetchHostBookings,
+  fetchMyBookings,
+  fetchPendingProperties,
+} from "@/lib/api";
 import { useAuth } from "@/components/auth/AuthProvider";
 import type { Booking } from "@/types/booking";
 import { BOOKING_STATUS_LABELS } from "@/types/booking";
@@ -30,6 +34,7 @@ type NotifItem = {
   title: string;
   body: string;
   href: string;
+  urgent?: boolean;
 };
 
 export default function NotificationsBell() {
@@ -37,54 +42,82 @@ export default function NotificationsBell() {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotifItem[]>([]);
   const [unread, setUnread] = useState(0);
+  const [loading, setLoading] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  const load = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const notifs: NotifItem[] = [];
+
+      if (user.role === "admin") {
+        try {
+          const pending = await fetchPendingProperties();
+          pending.data.slice(0, 10).forEach((p) => {
+            notifs.push({
+              id: `pending-${p.id}`,
+              title: "Annonce à modérer",
+              body: `${p.name} · ${p.city || p.loc}`,
+              href: "/admin",
+              urgent: true,
+            });
+          });
+        } catch {
+          /* ignore */
+        }
+      }
+
+      if (user.role === "client") {
+        const res = await fetchMyBookings();
+        (res.data as Booking[]).slice(0, 12).forEach((b) => {
+          notifs.push({
+            id: `${b.id}-${b.status}`,
+            title:
+              b.status === "confirmed"
+                ? "Réservation confirmée"
+                : b.status === "cancelled"
+                  ? "Réservation annulée"
+                  : b.status === "rejected"
+                    ? "Réservation refusée"
+                    : BOOKING_STATUS_LABELS[b.status] || "Mise à jour",
+            body: `${b.propertyName || "Bien"} · ${formatDayFr(b.checkIn)} → ${formatDayFr(b.checkOut)}`,
+            href: "/compte/reservations",
+            urgent: b.status === "confirmed" || b.status === "rejected",
+          });
+        });
+      }
+
+      if (user.role === "owner" || user.role === "agency") {
+        const res = await fetchHostBookings();
+        (res.data as Booking[]).slice(0, 12).forEach((b) => {
+          notifs.push({
+            id: `${b.id}-${b.status}`,
+            title: b.status === "pending" ? "Nouvelle demande de réservation" : BOOKING_STATUS_LABELS[b.status],
+            body: `${b.propertyName || "Bien"} · ${b.guestFirstName} ${b.guestLastName}`,
+            href: user.role === "agency" ? "/agence/reservations" : "/proprietaire/reservations",
+            urgent: b.status === "pending",
+          });
+        });
+      }
+
+      const seen = getSeenIds();
+      setItems(notifs);
+      setUnread(notifs.filter((n) => !seen.has(n.id)).length);
+    } catch {
+      setItems([]);
+      setUnread(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const res =
-          user.role === "client" ? await fetchMyBookings() : await fetchHostBookings();
-        if (cancelled) return;
-
-        const bookings = res.data as Booking[];
-        const notifs: NotifItem[] = bookings.slice(0, 12).map((b) => {
-          if (user.role === "client") {
-            return {
-              id: `${b.id}-${b.status}`,
-              title: BOOKING_STATUS_LABELS[b.status],
-              body: `${b.propertyName || "Bien"} · ${formatDayFr(b.checkIn)} → ${formatDayFr(b.checkOut)}`,
-              href: "/compte/reservations",
-            };
-          }
-          return {
-            id: `${b.id}-${b.status}`,
-            title:
-              b.status === "pending"
-                ? "Nouvelle demande"
-                : BOOKING_STATUS_LABELS[b.status],
-            body: `${b.propertyName || "Bien"} · ${b.guestFirstName} ${b.guestLastName}`,
-            href: user.role === "agency" ? "/agence/reservations" : "/proprietaire/reservations",
-          };
-        });
-
-        const seen = getSeenIds();
-        setItems(notifs);
-        setUnread(notifs.filter((n) => !seen.has(n.id)).length);
-      } catch {
-        if (!cancelled) {
-          setItems([]);
-          setUnread(0);
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user]);
+    void load();
+    const timer = setInterval(() => void load(), 25000);
+    return () => clearInterval(timer);
+  }, [user, load]);
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
@@ -129,10 +162,17 @@ export default function NotificationsBell() {
 
       {open && (
         <div className="absolute right-0 top-12 z-[60] w-80 overflow-hidden rounded-2xl border border-black/5 bg-white shadow-xl">
-          <div className="border-b border-black/5 px-4 py-3">
+          <div className="flex items-center justify-between border-b border-black/5 px-4 py-3">
             <p className="text-xs font-bold uppercase tracking-wider text-[var(--navy)]">
               Notifications
             </p>
+            <button
+              type="button"
+              onClick={() => void load()}
+              className="text-[10px] font-semibold uppercase text-[var(--muted)] hover:text-[var(--navy)]"
+            >
+              {loading ? "..." : "Actualiser"}
+            </button>
           </div>
           <div className="max-h-80 overflow-y-auto">
             {items.length === 0 ? (
@@ -141,17 +181,19 @@ export default function NotificationsBell() {
               </p>
             ) : (
               items.map((n) => (
-                <Link
-                  key={n.id}
-                  href={n.href}
-                  onClick={() => setOpen(false)}
-                  className="block border-b border-black/5 px-4 py-3 hover:bg-[var(--surface)]"
-                >
-                  <p className="text-sm font-semibold text-[var(--navy)]">{n.title}</p>
-                  <p className="mt-0.5 text-xs text-[var(--muted)]">{n.body}</p>
-                </Link>
-              ))
-            )}
+                  <Link
+                    key={n.id}
+                    href={n.href}
+                    onClick={() => setOpen(false)}
+                    className={`block border-b border-black/5 px-4 py-3 hover:bg-[var(--surface)] ${
+                      n.urgent ? "bg-amber-50/60" : ""
+                    }`}
+                  >
+                    <p className="text-sm font-semibold text-[var(--navy)]">{n.title}</p>
+                    <p className="mt-0.5 text-xs text-[var(--muted)]">{n.body}</p>
+                  </Link>
+                ))
+              )}
           </div>
         </div>
       )}

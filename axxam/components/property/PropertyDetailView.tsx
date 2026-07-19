@@ -145,7 +145,15 @@ export default function PropertyDetailView({ id, fromAdmin = false }: PropertyDe
       <div className="overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm">
         <div className="relative aspect-[16/9] bg-[var(--surface)]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={current} alt={property.name} className="h-full w-full object-cover" />
+          <img
+            src={current}
+            alt={property.name}
+            className="h-full w-full object-cover"
+            onError={(e) => {
+              e.currentTarget.src =
+                "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80";
+            }}
+          />
 
           {images.length > 1 && (
             <>

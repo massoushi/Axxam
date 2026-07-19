@@ -194,7 +194,7 @@ export default function PropertyPublishForm({
         <h2 className="font-display text-2xl font-semibold text-[var(--navy)]">Localisation</h2>
         <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
-            <label className={labelClass}>Ville *</label>
+            <label className={labelClass}>Wilaya *</label>
             <select className={inputClass} value={city} onChange={(e) => setCity(e.target.value)} required>
               {ALGERIAN_CITIES.map((c) => (
                 <option key={c} value={c}>

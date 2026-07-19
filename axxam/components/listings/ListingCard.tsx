@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import PropertyImage from "@/components/ui/PropertyImage";
 import type { Property } from "@/types/property";
 
 type ListingCardProps = {
@@ -15,19 +15,16 @@ export default function ListingCard({ item, id, favorites, toggleFavorite, onCar
   const isFav = favorites.includes(id);
 
   return (
-    <article
-      className="group cursor-pointer"
-      onClick={() => onCardClick(item)}
-    >
+    <article className="group cursor-pointer" onClick={() => onCardClick(item)}>
       <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-[var(--navy-soft)]/10">
-        <Image
+        <PropertyImage
           src={item.img}
           alt={item.name}
           fill
-          unoptimized={item.img.startsWith("data:")}
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
           className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-        />        <div className="absolute inset-0 bg-gradient-to-t from-[var(--navy)]/50 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--navy)]/50 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
         {item.badge && (
           <span className="absolute top-3 left-3 bg-[var(--navy)]/90 text-[var(--gold)] text-[10px] font-bold px-2.5 py-1 rounded-full tracking-wide">
