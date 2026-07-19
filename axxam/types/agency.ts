@@ -1,20 +1,36 @@
 export const PROPERTY_TYPES = [
-  { value: "studio", label: "Studio", bedrooms: 0 },
-  { value: "f1", label: "F1", bedrooms: 1 },
-  { value: "f2", label: "F2", bedrooms: 2 },
-  { value: "f3", label: "F3", bedrooms: 3 },
-  { value: "f4", label: "F4", bedrooms: 4 },
-  { value: "f5", label: "F5+", bedrooms: 5 },
-  { value: "duplex", label: "Duplex", bedrooms: 3 },
-  { value: "villa", label: "Villa", bedrooms: 4 },
-  { value: "maison", label: "Maison / Riad", bedrooms: 3 },
-  { value: "immeuble", label: "Immeuble", bedrooms: 0 },
-  { value: "appartement", label: "Appartement (autre)", bedrooms: 2 },
-  { value: "terrain", label: "Terrain", bedrooms: 0 },
-  { value: "local-commercial", label: "Local commercial", bedrooms: 0 },
-  { value: "bureau", label: "Bureau", bedrooms: 0 },
-  { value: "vehicule", label: "Véhicule", bedrooms: 0 },
+  { value: "studio", label: "Studio", bedrooms: 0, group: "appartements" },
+  { value: "f1", label: "F1", bedrooms: 1, group: "appartements" },
+  { value: "f2", label: "F2", bedrooms: 2, group: "appartements" },
+  { value: "f3", label: "F3", bedrooms: 3, group: "appartements" },
+  { value: "f4", label: "F4", bedrooms: 4, group: "appartements" },
+  { value: "f5", label: "F5", bedrooms: 5, group: "appartements" },
+  { value: "f6", label: "F6", bedrooms: 6, group: "appartements" },
+  { value: "f7", label: "F7", bedrooms: 7, group: "appartements" },
+  { value: "f8", label: "F8+", bedrooms: 8, group: "appartements" },
+  { value: "duplex", label: "Duplex", bedrooms: 3, group: "maisons" },
+  { value: "villa", label: "Villa", bedrooms: 4, group: "maisons" },
+  { value: "maison", label: "Maison / Riad", bedrooms: 3, group: "maisons" },
+  { value: "immeuble", label: "Immeuble", bedrooms: 0, group: "maisons" },
+  { value: "terrain", label: "Terrain", bedrooms: 0, group: "autres" },
+  { value: "local-commercial", label: "Local commercial", bedrooms: 0, group: "autres" },
+  { value: "bureau", label: "Bureau", bedrooms: 0, group: "autres" },
+  { value: "vehicule", label: "Véhicule", bedrooms: 0, group: "autres" },
 ] as const;
+
+export const PROPERTY_TYPE_GROUPS = [
+  { id: "appartements", label: "Appartements (Studio → F8)" },
+  { id: "maisons", label: "Villas, duplex & maisons" },
+  { id: "autres", label: "Terrain, local & véhicule" },
+] as const;
+
+export type PoolOption = "avec-piscine" | "sans-piscine" | "na";
+
+export const POOL_OPTIONS: { value: PoolOption; label: string; hint: string }[] = [
+  { value: "avec-piscine", label: "Avec piscine", hint: "Piscine privée ou partagée" },
+  { value: "sans-piscine", label: "Sans piscine", hint: "Pas de piscine" },
+  { value: "na", label: "Non concerné", hint: "Terrain, véhicule, local…" },
+];
 
 export function propertyTypeLabel(type?: string) {
   return PROPERTY_TYPES.find((t) => t.value === type)?.label || type || "Bien";

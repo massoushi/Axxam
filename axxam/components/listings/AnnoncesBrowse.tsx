@@ -183,7 +183,10 @@ export default function AnnoncesBrowse() {
                 <option value="f2">F2</option>
                 <option value="f3">F3</option>
                 <option value="f4">F4</option>
-                <option value="f5">F5+</option>
+                <option value="f5">F5</option>
+                <option value="f6">F6</option>
+                <option value="f7">F7</option>
+                <option value="f8">F8+</option>
               </optgroup>
               <optgroup label="Maisons">
                 <option value="duplex">Duplex</option>

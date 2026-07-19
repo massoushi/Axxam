@@ -8,9 +8,12 @@ import {
   ALGERIAN_CITIES,
   AMENITY_OPTIONS,
   OFFER_PRESETS,
+  POOL_OPTIONS,
   PRICE_UNITS,
   PROPERTY_CATEGORIES,
+  PROPERTY_TYPE_GROUPS,
   PROPERTY_TYPES,
+  type PoolOption,
   type PriceUnit,
   type TransactionType,
 } from "@/types/agency";
@@ -68,7 +71,8 @@ export default function PropertyPublishForm({
 
   const [offerPreset, setOfferPreset] = useState("sejour");
   const [name, setName] = useState("");
-  const [type, setType] = useState("f2");
+  const [type, setType] = useState("");
+  const [hasPool, setHasPool] = useState<PoolOption | "">("");
   const [category, setCategory] = useState("autre");
   const [transaction, setTransaction] = useState<TransactionType>("location");
   const [city, setCity] = useState("Alger");
@@ -84,6 +88,8 @@ export default function PropertyPublishForm({
   const [amenities, setAmenities] = useState<string[]>([]);
   const [images, setImages] = useState<string[]>([]);
 
+  const isHousingType = !["terrain", "vehicule", "local-commercial", "bureau", "immeuble"].includes(type);
+
   const applyPreset = (presetId: string) => {
     const preset = OFFER_PRESETS.find((p) => p.id === presetId);
     if (!preset) return;
@@ -92,7 +98,39 @@ export default function PropertyPublishForm({
     setPriceUnit(preset.priceUnit);
     if (preset.defaultType) {
       setType(preset.defaultType);
-      if (preset.defaultType === "vehicule") setCategory("voiture");
+      const suggested = PROPERTY_TYPES.find((t) => t.value === preset.defaultType)?.bedrooms;
+      if (suggested != null) setBedrooms(suggested);
+      if (preset.defaultType === "vehicule") {
+        setCategory("voiture");
+        setHasPool("na");
+      }
+      if (preset.defaultType === "terrain") {
+        setHasPool("na");
+      }
+    }
+  };
+
+  const selectType = (next: string) => {
+    setType(next);
+    const meta = PROPERTY_TYPES.find((t) => t.value === next);
+    if (meta) setBedrooms(meta.bedrooms);
+    if (["terrain", "vehicule", "local-commercial", "bureau"].includes(next)) {
+      setHasPool("na");
+      if (next === "terrain") setCategory("urbain");
+      if (next === "vehicule") setCategory("voiture");
+    } else if (hasPool === "na" || !hasPool) {
+      setHasPool("");
+    }
+  };
+
+  const selectPool = (value: PoolOption) => {
+    setHasPool(value);
+    if (value === "avec-piscine") {
+      setCategory("piscine-privee");
+      setAmenities((prev) => (prev.includes("Piscine") ? prev : [...prev, "Piscine"]));
+    } else if (value === "sans-piscine") {
+      setAmenities((prev) => prev.filter((a) => a !== "Piscine" && a !== "Piscine privée"));
+      if (category === "piscine-privee") setCategory("autre");
     }
   };
 
@@ -104,13 +142,28 @@ export default function PropertyPublishForm({
     e.preventDefault();
     setError(null);
     setSuccess(null);
+
+    if (!type) {
+      setError("Veuillez préciser le type de bien (F1, F2, villa, terrain, duplex…).");
+      return;
+    }
+    if (!hasPool) {
+      setError("Indiquez si le bien est avec piscine, sans piscine, ou non concerné.");
+      return;
+    }
+
     setSubmitting(true);
+
+    const finalAmenities = [...amenities];
+    if (hasPool === "avec-piscine" && !finalAmenities.includes("Piscine")) {
+      finalAmenities.push("Piscine");
+    }
 
     try {
       const result = await publishProperty({
         name,
         type,
-        category,
+        category: hasPool === "avec-piscine" ? "piscine-privee" : category,
         transaction,
         city,
         commune,
@@ -122,7 +175,7 @@ export default function PropertyPublishForm({
         capacity,
         surface: Number(surface) || 0,
         description,
-        amenities,
+        amenities: finalAmenities,
         images,
         host: resolvedHost,
         agencyId: resolvedAgencyId,
@@ -179,8 +232,76 @@ export default function PropertyPublishForm({
       </section>
 
       <section className="rounded-2xl border border-black/5 bg-white p-5 sm:p-6">
+        <h2 className="font-display text-2xl font-semibold text-[var(--navy)]">Type de bien *</h2>
+        <p className="mt-1 text-sm text-[var(--muted)]">
+          Obligatoire : précisez la typologie (F1, F2… F8, villa, duplex, terrain…) puis piscine.
+        </p>
+
+        <div className="mt-5 space-y-5">
+          {PROPERTY_TYPE_GROUPS.map((group) => (
+            <div key={group.id}>
+              <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[var(--gold-deep)]">
+                {group.label}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {PROPERTY_TYPES.filter((t) => t.group === group.id).map((t) => (
+                  <button
+                    key={t.value}
+                    type="button"
+                    onClick={() => selectType(t.value)}
+                    className={`rounded-full border px-3.5 py-2 text-xs font-bold uppercase tracking-wide transition-colors ${
+                      type === t.value
+                        ? "border-[var(--gold)] bg-[var(--navy)] text-[var(--gold)]"
+                        : "border-black/10 bg-white text-[var(--navy)] hover:border-[var(--gold)]/50"
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {!type && (
+          <p className="mt-3 text-xs font-medium text-amber-700">Sélectionnez un type de bien pour continuer.</p>
+        )}
+
+        <div className="mt-6">
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[var(--gold-deep)]">
+            Piscine *
+          </p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {POOL_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => selectPool(opt.value)}
+                className={`rounded-2xl border px-4 py-3 text-left transition-colors ${
+                  hasPool === opt.value
+                    ? "border-[var(--gold)] bg-[var(--navy)] text-white"
+                    : "border-black/10 bg-white hover:border-[var(--gold)]/50"
+                }`}
+              >
+                <p
+                  className={`text-sm font-semibold ${
+                    hasPool === opt.value ? "text-[var(--gold)]" : "text-[var(--navy)]"
+                  }`}
+                >
+                  {opt.label}
+                </p>
+                <p className={`mt-0.5 text-xs ${hasPool === opt.value ? "text-white/60" : "text-[var(--muted)]"}`}>
+                  {opt.hint}
+                </p>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-black/5 bg-white p-5 sm:p-6">
         <h2 className="font-display text-2xl font-semibold text-[var(--navy)]">Informations générales</h2>
-        <p className="mt-1 text-sm text-[var(--muted)]">Titre, type et classification du bien</p>
+        <p className="mt-1 text-sm text-[var(--muted)]">Titre et détails de l&apos;annonce</p>
 
         <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
@@ -189,64 +310,42 @@ export default function PropertyPublishForm({
               className={inputClass}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ex. Villa Azure — vue mer"
+              placeholder={
+                type
+                  ? `Ex. ${PROPERTY_TYPES.find((t) => t.value === type)?.label || "Bien"} Hydra — vue mer`
+                  : "Ex. F3 Hydra — vue mer"
+              }
               required
             />
           </div>
 
-          <div>
-            <label className={labelClass}>Type de bien *</label>
-            <select
-              className={inputClass}
-              value={type}
-              onChange={(e) => {
-                const next = e.target.value;
-                setType(next);
-                const suggested = PROPERTY_TYPES.find((t) => t.value === next)?.bedrooms;
-                if (suggested != null) setBedrooms(suggested);
-              }}
-              required
-            >
-              <optgroup label="Appartements">
-                {PROPERTY_TYPES.filter((t) =>
-                  ["studio", "f1", "f2", "f3", "f4", "f5", "appartement"].includes(t.value)
-                ).map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Maisons & immeubles">
-                {PROPERTY_TYPES.filter((t) =>
-                  ["duplex", "villa", "maison", "immeuble"].includes(t.value)
-                ).map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Autres">
-                {PROPERTY_TYPES.filter((t) =>
-                  ["terrain", "local-commercial", "bureau", "vehicule"].includes(t.value)
-                ).map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
-              </optgroup>
-            </select>
+          <div className="sm:col-span-2 rounded-xl border border-dashed border-[var(--navy)]/15 bg-[var(--surface)] px-4 py-3 text-sm text-[var(--navy)]">
+            <span className="font-semibold">Récapitulatif : </span>
+            {type ? PROPERTY_TYPES.find((t) => t.value === type)?.label : "Type non choisi"}
+            {" · "}
+            {hasPool === "avec-piscine"
+              ? "Avec piscine"
+              : hasPool === "sans-piscine"
+                ? "Sans piscine"
+                : hasPool === "na"
+                  ? "Piscine non concernée"
+                  : "Piscine non précisée"}
           </div>
 
-          <div>
-            <label className={labelClass}>Catégorie</label>
-            <select className={inputClass} value={category} onChange={(e) => setCategory(e.target.value)}>
-              {PROPERTY_CATEGORIES.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          {isHousingType && type && (
+            <div>
+              <label className={labelClass}>Ambiance / emplacement</label>
+              <select className={inputClass} value={category} onChange={(e) => setCategory(e.target.value)}>
+                {PROPERTY_CATEGORIES.filter(
+                  (c) => !["voiture", "utilitaire", "urbain", "agricole"].includes(c.value)
+                ).map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <label className={labelClass}>Transaction *</label>

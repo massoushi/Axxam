@@ -70,9 +70,13 @@ export default function ListingCard({ item, id, favorites, toggleFavorite, onCar
           item.type === "f3" ||
           item.type === "f4" ||
           item.type === "f5" ||
+          item.type === "f6" ||
+          item.type === "f7" ||
+          item.type === "f8" ||
           item.type === "studio" ||
           item.type === "duplex" ||
-          item.type === "villa") && (
+          item.type === "villa" ||
+          item.type === "terrain") && (
           <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--gold-deep)]">
             {item.type === "studio"
               ? "Studio"
@@ -80,7 +84,12 @@ export default function ListingCard({ item, id, favorites, toggleFavorite, onCar
                 ? "Villa"
                 : item.type === "duplex"
                   ? "Duplex"
-                  : item.type?.toUpperCase()}
+                  : item.type === "terrain"
+                    ? "Terrain"
+                    : item.type === "f8"
+                      ? "F8+"
+                      : item.type?.toUpperCase()}
+            {item.category === "piscine-privee" ? " · Piscine" : ""}
           </p>
         )}
         <p className="mt-2 text-sm">
