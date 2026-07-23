@@ -148,6 +148,9 @@ export default function Footer() {
         <div className="container mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-5 text-xs text-white/40 sm:flex-row sm:px-6">
           <span>© 2026 AXXAM. Tous droits réservés.</span>
           <div className="flex gap-5">
+            <Link href="/qr" className="hover:text-white">
+              QR code
+            </Link>
             <Link href="/confidentialite" className="hover:text-white">
               Confidentialité
             </Link>
