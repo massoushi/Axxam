@@ -14,6 +14,12 @@ export function getApiBaseUrl() {
   return API_URL;
 }
 
+/** URL image PNG d'un code-barres (Code 128) pour une référence AXXAM */
+export function getBarcodeUrl(code: string, format: "code128" | "qrcode" = "code128") {
+  const value = encodeURIComponent(String(code || "").trim());
+  return `${API_URL}/barcode/${value}?format=${format}&scale=3`;
+}
+
 type ApiResponse<T> = {
   success: boolean;
   message?: string;

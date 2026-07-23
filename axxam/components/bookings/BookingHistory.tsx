@@ -6,6 +6,7 @@ import {
   fetchHostBookings,
   fetchMyBookings,
   fetchMyReviews,
+  getBarcodeUrl,
   markBookingPaymentOffline,
   openConversation,
   updateBookingStatus,
