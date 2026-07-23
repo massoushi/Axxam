@@ -4,17 +4,23 @@ import {
   deleteProperty,
   getPropertyById,
   listProperties,
+  updateProperty,
+  updatePropertyAssignment,
   updatePropertyAvailability,
   updatePropertyStatus,
 } from "../controllers/properties.controller.js";
+import { authenticate, requireRole } from "../middleware/auth.js";
 
 const router = Router();
 
 router.get("/", listProperties);
-router.post("/", createProperty);
 router.get("/:id", getPropertyById);
-router.patch("/:id/status", updatePropertyStatus);
-router.put("/:id/availability", updatePropertyAvailability);
-router.delete("/:id", deleteProperty);
+
+router.post("/", authenticate, requireRole("owner", "agency", "admin"), createProperty);
+router.patch("/:id", authenticate, requireRole("owner", "agency", "admin"), updateProperty);
+router.patch("/:id/status", authenticate, requireRole("owner", "agency", "admin"), updatePropertyStatus);
+router.patch("/:id/assign", authenticate, requireRole("agency", "admin"), updatePropertyAssignment);
+router.put("/:id/availability", authenticate, requireRole("owner", "agency", "admin"), updatePropertyAvailability);
+router.delete("/:id", authenticate, requireRole("owner", "agency", "admin"), deleteProperty);
 
 export default router;

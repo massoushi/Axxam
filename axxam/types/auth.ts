@@ -78,6 +78,8 @@ export type AuthUser = {
   address: string;
   logo: string | null;
   status: UserStatus;
+  subscriptionPlan?: "free" | "pro";
+  commissionRate?: number;
   displayName: string;
   createdAt: string;
 };

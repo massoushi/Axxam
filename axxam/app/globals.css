@@ -1,18 +1,27 @@
 @import "tailwindcss";
 
+/* Identité AXXAM — charbon · terre cuite · sable (logo) */
 :root {
-  --navy: #0b1520;
-  --navy-mid: #122233;
-  --navy-soft: #1a3348;
-  --gold: #c9a962;
-  --gold-soft: #e4d4a8;
-  --gold-deep: #a8893f;
-  --ink: #0f1a24;
-  --muted: #6b7c8a;
-  --surface: #f5f7f9;
+  --navy: #2f2f2e;
+  --navy-mid: #3c3c3b;
+  --navy-soft: #525250;
+  --gold: #a65126;
+  --gold-soft: #c8794a;
+  --gold-deep: #8a4019;
+  --ink: #2a2a29;
+  --muted: #7a736c;
+  --surface: #f7f2ea;
+  --sand: #ded0b6;
+  --sand-soft: #ebe3d4;
   --white: #ffffff;
   --background: var(--surface);
   --foreground: var(--ink);
+  --radius: 1.25rem;
+  --radius-sm: 0.875rem;
+  --shadow-soft: 0 8px 30px rgba(47, 47, 46, 0.07);
+  --shadow-lift: 0 18px 50px rgba(47, 47, 46, 0.14);
+  --shadow-gold: 0 8px 28px rgba(166, 81, 38, 0.28);
+  --ring-focus: 0 0 0 3px color-mix(in srgb, var(--gold) 28%, transparent);
 }
 
 @theme inline {
@@ -27,6 +36,8 @@
   --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-surface: var(--surface);
+  --color-sand: var(--sand);
+  --color-sand-soft: var(--sand-soft);
   --font-sans: var(--font-outfit);
   --font-display: var(--font-cormorant);
 }
@@ -36,9 +47,18 @@ html {
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(ellipse 110% 70% at 100% -5%, rgba(166, 81, 38, 0.07), transparent 52%),
+    radial-gradient(ellipse 70% 45% at -5% 95%, rgba(222, 208, 182, 0.55), transparent 48%),
+    var(--background);
   color: var(--foreground);
   font-family: var(--font-outfit), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--gold) 28%, white);
+  color: var(--navy);
 }
 
 .font-display {
@@ -51,6 +71,103 @@ body {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Surfaces & boutons */
+.axxam-card {
+  border: 1px solid color-mix(in srgb, var(--navy) 6%, transparent);
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+}
+
+.axxam-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: var(--gold);
+  color: var(--white);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.85rem 1.6rem;
+  box-shadow: var(--shadow-gold);
+  transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+.axxam-btn-primary:hover {
+  background: var(--gold-deep);
+  transform: translateY(-1px);
+}
+
+.axxam-btn-dark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: var(--navy);
+  color: var(--sand);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.85rem 1.6rem;
+  transition: background 0.2s ease;
+}
+.axxam-btn-dark:hover {
+  background: var(--navy-soft);
+}
+
+.axxam-input {
+  width: 100%;
+  border-radius: 0.875rem;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: var(--white);
+  padding: 0.65rem 0.9rem;
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.axxam-input:focus {
+  border-color: var(--gold);
+  box-shadow: var(--ring-focus);
+}
+
+.axxam-section-title {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-weight: 600;
+  color: var(--navy);
+  letter-spacing: -0.01em;
+}
+
+.axxam-eyebrow {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.axxam-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--sand-soft) 0%,
+    color-mix(in srgb, var(--sand) 55%, white) 50%,
+    var(--sand-soft) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 1rem;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
 }
 
 @keyframes fade-up {
@@ -83,6 +200,16 @@ body {
   }
 }
 
+@keyframes soft-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(166, 81, 38, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(166, 81, 38, 0);
+  }
+}
+
 .animate-fade-up {
   animation: fade-up 0.9s ease-out both;
 }
@@ -103,12 +230,29 @@ body {
   animation: gold-shimmer 3.5s ease-in-out infinite;
 }
 
+.animate-soft-pulse {
+  animation: soft-pulse 2.4s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up,
   .animate-fade-up-delay,
   .animate-fade-up-delay-2,
   .animate-ken-burns,
-  .animate-gold-line {
+  .animate-gold-line,
+  .animate-soft-pulse,
+  .axxam-skeleton {
     animation: none;
   }
+}
+
+/* Notifications sur fond clair (shell agence) */
+.agency-notif-light button.relative {
+  border-color: color-mix(in srgb, var(--navy) 12%, transparent) !important;
+  color: var(--navy) !important;
+  background: white;
+}
+.agency-notif-light button.relative:hover {
+  border-color: var(--gold) !important;
+  color: var(--gold-deep) !important;
 }

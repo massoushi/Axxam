@@ -1,9 +1,10 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import AvailabilityCalendar from "@/components/calendar/AvailabilityCalendar";
-import { fetchPropertyById, updatePropertyStatus } from "@/lib/api";
+import { fetchPropertyById, fetchPropertyReviews, updatePropertyStatus } from "@/lib/api";
+import type { Review } from "@/types/messaging";
 import {
   PROPERTY_STATUSES,
   PROPERTY_TYPES,
@@ -52,6 +53,7 @@ export default function PropertyDetailView({ id, fromAdmin = false }: PropertyDe
   const [checkOut, setCheckOut] = useState("");
   const [showBooking, setShowBooking] = useState(false);
   const [showAuthGate, setShowAuthGate] = useState(false);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
@@ -64,6 +66,12 @@ export default function PropertyDetailView({ id, fromAdmin = false }: PropertyDe
           setProperty(res.data);
           setError(null);
           setImageIndex(0);
+        }
+        try {
+          const rev = await fetchPropertyReviews(id);
+          if (!cancelled) setReviews(rev.data);
+        } catch {
+          /* ignore */
         }
       } catch (err) {
         if (!cancelled) {
@@ -142,8 +150,8 @@ export default function PropertyDetailView({ id, fromAdmin = false }: PropertyDe
         </div>
       )}
 
-      <div className="overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm">
-        <div className="relative aspect-[16/9] bg-[var(--surface)]">
+      <div className="overflow-hidden rounded-3xl border border-[var(--sand)]/50 bg-white shadow-[var(--shadow-soft)]">
+        <div className="relative aspect-[16/9] bg-[var(--sand-soft)]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={current}
@@ -160,14 +168,14 @@ export default function PropertyDetailView({ id, fromAdmin = false }: PropertyDe
               <button
                 type="button"
                 onClick={() => setImageIndex((i) => (i - 1 + images.length) % images.length)}
-                className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-lg shadow"
+                className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-lg text-[var(--navy)] shadow-md backdrop-blur-sm transition hover:scale-105"
               >
                 ‹
               </button>
               <button
                 type="button"
                 onClick={() => setImageIndex((i) => (i + 1) % images.length)}
-                className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-lg shadow"
+                className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-lg text-[var(--navy)] shadow-md backdrop-blur-sm transition hover:scale-105"
               >
                 ›
               </button>
@@ -295,10 +303,38 @@ export default function PropertyDetailView({ id, fromAdmin = false }: PropertyDe
               </p>
             </div>
           </section>
+
+          <section>
+            <h2 className="font-display text-xl font-semibold text-[var(--navy)]">
+              Avis voyageurs ({reviews.length})
+            </h2>
+            {reviews.length === 0 ? (
+              <p className="mt-2 text-sm text-[var(--muted)]">Pas encore d&apos;avis sur ce bien.</p>
+            ) : (
+              <div className="mt-3 space-y-3">
+                {reviews.map((r) => (
+                  <article
+                    key={r.id}
+                    className="rounded-xl border border-black/5 bg-white px-4 py-3"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-[var(--navy)]">
+                        {r.clientName || "Voyageur"}
+                      </p>
+                      <p className="text-xs font-bold text-[var(--gold-deep)]">{r.rating}/5</p>
+                    </div>
+                    {r.comment && (
+                      <p className="mt-1 text-sm text-[var(--ink)]">{r.comment}</p>
+                    )}
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
         </div>
 
         <aside className="space-y-4">
-          <div className="sticky top-6 rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
+          <div className="sticky top-24 rounded-3xl border border-[var(--sand)]/60 bg-white p-5 shadow-[var(--shadow-soft)] ring-1 ring-[var(--gold)]/10">
             <p className="text-2xl font-bold text-[var(--navy)]">
               {Number(property.price).toLocaleString("fr-DZ")}{" "}
               <span className="text-sm font-normal text-[var(--muted)]">DZD / {property.priceUnit}</span>
@@ -366,7 +402,7 @@ export default function PropertyDetailView({ id, fromAdmin = false }: PropertyDe
                     }
                     setShowBooking(true);
                   }}
-                  className="mt-3 w-full rounded-lg bg-[var(--gold)] px-4 py-3 text-xs font-bold uppercase tracking-wider text-[var(--navy)] disabled:opacity-40"
+                  className="mt-3 w-full rounded-lg bg-[var(--gold)] px-4 py-3 text-xs font-bold uppercase tracking-wider text-white disabled:opacity-40"
                 >
                   {checkIn && checkOut ? "Demander la réservation" : "Choisir des dates d'abord"}
                 </button>

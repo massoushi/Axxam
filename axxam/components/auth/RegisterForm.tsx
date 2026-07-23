@@ -1,10 +1,11 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { dashboardPathForRole } from "@/lib/auth-storage";
+import Logo from "@/components/layout/Logo";
 import { ALGERIAN_WILAYAS } from "@/types/auth";
 import type { RegisterPayload } from "@/types/auth";
 
@@ -51,6 +52,7 @@ export default function RegisterForm() {
   const [logo, setLogo] = useState<string | null>(null);
 
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [acceptPrivacy, setAcceptPrivacy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -74,8 +76,10 @@ export default function RegisterForm() {
       setError("Les mots de passe ne correspondent pas");
       return;
     }
-    if (!acceptTerms) {
-      setError("Veuillez accepter les conditions d'utilisation");
+    if (!acceptTerms || !acceptPrivacy) {
+      setError(
+        "Veuillez lire et accepter les Conditions d'utilisation et la Politique de confidentialité avant de créer votre compte."
+      );
       return;
     }
 
@@ -119,8 +123,9 @@ export default function RegisterForm() {
   return (
     <div className="overflow-y-auto bg-[var(--surface)]">
       <div className="mx-auto max-w-2xl px-4 py-10 pb-16 sm:px-6">
-        <div className="mb-8 text-center">
-          <h1 className="font-display text-3xl font-semibold text-[var(--navy)]">
+        <div className="mb-8 flex flex-col items-center text-center">
+          <Logo size={88} href="/" />
+          <h1 className="mt-6 font-display text-3xl font-semibold text-[var(--navy)]">
             Créer un compte
           </h1>
           <p className="mt-2 text-sm text-[var(--muted)]">
@@ -256,15 +261,75 @@ export default function RegisterForm() {
             </div>
           )}
 
-          <label className="flex items-start gap-2 text-xs text-[var(--muted)]">
-            <input
-              type="checkbox"
-              checked={acceptTerms}
-              onChange={(e) => setAcceptTerms(e.target.checked)}
-              className="mt-0.5"
-            />
-            J&apos;accepte les conditions d&apos;utilisation et la politique de confidentialité AXXAM.
-          </label>
+          <div className="space-y-3 rounded-xl border border-[var(--sand)] bg-[var(--surface)]/80 p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--navy)]">
+              Documents légaux (obligatoire)
+            </p>
+            <p className="text-xs leading-relaxed text-[var(--muted)]">
+              Avant de créer votre compte, consultez les documents ci-dessous. Ils définissent les
+              règles entre clients, propriétaires et agences sur AXXAM.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/conditions"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full border border-[var(--navy)]/15 bg-white px-3 py-1.5 text-[11px] font-semibold text-[var(--navy)] hover:border-[var(--gold)]"
+              >
+                Lire les Conditions d&apos;utilisation
+              </Link>
+              <Link
+                href="/confidentialite"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full border border-[var(--navy)]/15 bg-white px-3 py-1.5 text-[11px] font-semibold text-[var(--navy)] hover:border-[var(--gold)]"
+              >
+                Lire la Politique de confidentialité
+              </Link>
+            </div>
+
+            <label className="flex items-start gap-2.5 text-xs text-[var(--ink)]">
+              <input
+                type="checkbox"
+                checked={acceptTerms}
+                onChange={(e) => setAcceptTerms(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-[var(--gold)]"
+                required
+              />
+              <span>
+                J&apos;ai lu et j&apos;accepte les{" "}
+                <Link
+                  href="/conditions"
+                  target="_blank"
+                  className="font-semibold text-[var(--gold-deep)] underline"
+                >
+                  Conditions d&apos;utilisation
+                </Link>
+                .
+              </span>
+            </label>
+
+            <label className="flex items-start gap-2.5 text-xs text-[var(--ink)]">
+              <input
+                type="checkbox"
+                checked={acceptPrivacy}
+                onChange={(e) => setAcceptPrivacy(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-[var(--gold)]"
+                required
+              />
+              <span>
+                J&apos;ai lu et j&apos;accepte la{" "}
+                <Link
+                  href="/confidentialite"
+                  target="_blank"
+                  className="font-semibold text-[var(--gold-deep)] underline"
+                >
+                  Politique de confidentialité
+                </Link>
+                .
+              </span>
+            </label>
+          </div>
 
           {error && (
             <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
@@ -278,8 +343,8 @@ export default function RegisterForm() {
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full rounded-full bg-[var(--gold)] py-3 text-xs font-bold uppercase tracking-wider text-[var(--navy)] disabled:opacity-60"
+            disabled={loading || !acceptTerms || !acceptPrivacy}
+            className="w-full rounded-full bg-[var(--gold)] py-3 text-xs font-bold uppercase tracking-wider text-white disabled:opacity-60"
           >
             {loading ? "Création..." : "Créer mon compte"}
           </button>

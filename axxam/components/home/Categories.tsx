@@ -1,76 +1,78 @@
 "use client";
 
-import Link from "next/link";
-import { EXPLORE_CATEGORIES, type ExploreCategory } from "@/data/listings";
+import { useRouter } from "next/navigation";
+import type { ExploreCategory } from "@/data/listings";
 import CategoryIcon from "@/components/ui/CategoryIcon";
 import Icon from "@/components/ui/Icon";
+import type { CategoryIconId } from "@/types/property";
+
+/** Catégories compactes façon Airbnb */
+export const HOME_FILTERS: {
+  id: string;
+  label: string;
+  icon: CategoryIconId;
+  href?: string;
+  filterId?: string;
+}[] = [
+  { id: "all", label: "Tout", icon: "all", filterId: "all" },
+  { id: "nuit", label: "À la nuit", icon: "night", href: "/hebergements" },
+  { id: "villa", label: "Villas", icon: "villa", filterId: "villa" },
+  { id: "piscine", label: "Piscine", icon: "pool", filterId: "piscine" },
+  { id: "duplex", label: "Duplex", icon: "panorama", filterId: "duplex" },
+  { id: "f3", label: "F3", icon: "business", filterId: "f3" },
+  { id: "f4", label: "F4", icon: "business", filterId: "f4" },
+  { id: "maison", label: "Maisons", icon: "riad", filterId: "maison" },
+  { id: "mois", label: "Longue durée", icon: "calendar", filterId: "mois" },
+  { id: "vente", label: "À vendre", icon: "key", href: "/immobilier" },
+  { id: "terrain", label: "Terrains", icon: "land", href: "/immobilier" },
+];
 
 type CategoriesProps = {
   activeId: string;
-  onSelect: (cat: ExploreCategory) => void;
+  onSelect: (cat: ExploreCategory | { id: string }) => void;
 };
 
-function buildAnnoncesHref(cat: ExploreCategory) {
-  if (!cat.filter) return "/annonces";
-  const params = new URLSearchParams();
-  if (cat.filter.type) params.set("type", cat.filter.type);
-  if (cat.filter.category) params.set("category", cat.filter.category);
-  if (cat.filter.transaction) params.set("transaction", cat.filter.transaction);
-  if (cat.filter.priceUnit) params.set("priceUnit", cat.filter.priceUnit);
-  const q = params.toString();
-  return q ? `/annonces?${q}` : "/annonces";
-}
-
 export default function Categories({ activeId, onSelect }: CategoriesProps) {
-  return (
-    <section className="bg-[var(--surface)] py-14 sm:py-16">
-      <div className="container mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="mb-8 flex items-end justify-between gap-4">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[var(--gold-deep)]">
-              Explorer
-            </p>
-            <h2 className="mt-2 font-display text-3xl sm:text-4xl font-semibold text-[var(--navy)]">
-              Que recherchez-vous ?
-            </h2>
-            <p className="mt-2 max-w-xl text-sm text-[var(--muted)]">
-              Séjours à la nuit, location longue durée, biens à vendre ou terrains.
-            </p>
-          </div>
-          <Link
-            href="/annonces"
-            className="shrink-0 text-xs font-semibold text-[var(--navy)] hover:text-[var(--gold-deep)] transition-colors"
-          >
-            Voir tout →
-          </Link>
-        </div>
+  const router = useRouter();
 
-        <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar sm:grid sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-12 sm:overflow-visible">
-          {EXPLORE_CATEGORIES.map((cat) => {
-            const isActive = activeId === cat.id;
+  return (
+    <div className="sticky top-16 z-40 border-b border-[var(--sand)]/80 bg-[var(--surface)]/95 backdrop-blur-md sm:top-[4.5rem]">
+      <div className="container mx-auto max-w-6xl px-2 sm:px-6">
+        <div className="flex gap-1 overflow-x-auto py-3.5 no-scrollbar">
+          {HOME_FILTERS.map((cat) => {
+            const isActive = activeId === cat.id || activeId === cat.filterId;
             return (
               <button
                 key={cat.id}
                 type="button"
-                onClick={() => onSelect(cat)}
-                onDoubleClick={() => {
-                  window.location.href = buildAnnoncesHref(cat);
+                onClick={() => {
+                  if (cat.href) {
+                    router.push(cat.href);
+                    return;
+                  }
+                  onSelect({ id: cat.filterId || cat.id });
                 }}
-                className={`flex min-w-[96px] flex-col items-center gap-2.5 rounded-2xl border px-2.5 py-4 transition-all duration-300 ${
+                className={`flex min-w-[76px] shrink-0 flex-col items-center gap-1.5 border-b-2 px-3 pb-2.5 pt-1 transition-colors ${
                   isActive
-                    ? "border-[var(--gold)] bg-[var(--navy)] text-[var(--gold)] shadow-lg shadow-[var(--navy)]/15"
-                    : "border-black/5 bg-white text-[var(--muted)] hover:border-[var(--gold)]/50 hover:text-[var(--navy)]"
+                    ? "border-[var(--gold)] text-[var(--navy)]"
+                    : "border-transparent text-[var(--muted)] hover:text-[var(--navy)]"
                 }`}
               >
-                <Icon className="h-6 w-6">
-                  <CategoryIcon id={cat.icon} />
-                </Icon>
-                <span className="text-[10px] font-medium text-center leading-tight">{cat.label}</span>
+                <span
+                  className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors ${
+                    isActive ? "bg-[var(--gold)]/12 text-[var(--gold-deep)]" : "bg-transparent"
+                  }`}
+                >
+                  <Icon className="h-5 w-5">
+                    <CategoryIcon id={cat.icon} />
+                  </Icon>
+                </span>
+                <span className="whitespace-nowrap text-[11px] font-medium">{cat.label}</span>
               </button>
             );
           })}
         </div>
       </div>
-    </section>
+    </div>
   );
 }

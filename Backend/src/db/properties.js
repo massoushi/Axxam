@@ -1,7 +1,8 @@
 import { query } from "../config/db.js";
 import { DEMO_PROPERTIES } from "../data/properties.js";
+import { once } from "./once.js";
 
-export async function ensurePropertiesTable() {
+export const ensurePropertiesTable = once(async () => {
   await query(`
     CREATE TABLE IF NOT EXISTS properties (
       id TEXT PRIMARY KEY,
@@ -38,12 +39,28 @@ export async function ensurePropertiesTable() {
     ADD COLUMN IF NOT EXISTS unavailable_dates JSONB NOT NULL DEFAULT '[]'::jsonb;
   `);
 
+  await query(`
+    ALTER TABLE properties
+    ADD COLUMN IF NOT EXISTS assigned_to TEXT;
+  `);
+
+  await query(`
+    ALTER TABLE properties
+    ADD COLUMN IF NOT EXISTS charges NUMERIC DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS gps_lat NUMERIC,
+    ADD COLUMN IF NOT EXISTS gps_lng NUMERIC,
+    ADD COLUMN IF NOT EXISTS ops_status TEXT DEFAULT 'available',
+    ADD COLUMN IF NOT EXISTS video_url TEXT DEFAULT '',
+    ADD COLUMN IF NOT EXISTS virtual_tour_url TEXT DEFAULT '';
+  `);
+
   await query(`CREATE INDEX IF NOT EXISTS idx_properties_agency ON properties (agency_id);`);
   await query(`CREATE INDEX IF NOT EXISTS idx_properties_city ON properties (city);`);
   await query(`CREATE INDEX IF NOT EXISTS idx_properties_status ON properties (status);`);
+  await query(`CREATE INDEX IF NOT EXISTS idx_properties_assigned ON properties (assigned_to);`);
 
   await seedDemoProperties();
-}
+});
 
 /** Insère les hébergements d'exemple s'ils n'existent pas encore (sans écraser les vrais). */
 export async function seedDemoProperties() {
@@ -154,6 +171,13 @@ export function mapPropertyRow(row) {
     category: row.category,
     transaction: row.transaction_type,
     status: row.status,
+    assignedTo: row.assigned_to || null,
+    charges: Number(row.charges) || 0,
+    gpsLat: row.gps_lat != null ? Number(row.gps_lat) : null,
+    gpsLng: row.gps_lng != null ? Number(row.gps_lng) : null,
+    opsStatus: row.ops_status || "available",
+    videoUrl: row.video_url || "",
+    virtualTourUrl: row.virtual_tour_url || "",
     unavailableDates: normalizeDates(row.unavailable_dates),
     createdAt: row.created_at,
   };

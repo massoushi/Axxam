@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
@@ -179,7 +179,7 @@ export default function ClientProfilePage() {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-full bg-[var(--gold)] px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-[var(--navy)] disabled:opacity-60"
+            className="rounded-full bg-[var(--gold)] px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-white disabled:opacity-60"
           >
             {saving ? "Enregistrement..." : "Enregistrer les modifications"}
           </button>

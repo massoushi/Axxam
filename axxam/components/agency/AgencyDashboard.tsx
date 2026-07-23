@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -181,7 +181,7 @@ export default function AgencyDashboard({
           </button>
           <Link
             href={publishHref}
-            className="inline-flex items-center justify-center rounded-lg bg-[var(--gold)] px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-[var(--navy)] hover:bg-[var(--gold-soft)] transition-colors"
+            className="inline-flex items-center justify-center rounded-lg bg-[var(--gold)] px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white hover:bg-[var(--gold-soft)] transition-colors"
           >
             + Ajouter un bien
           </Link>
@@ -399,7 +399,7 @@ export default function AgencyDashboard({
                             <button
                               type="button"
                               onClick={() => setCalendarProperty(property)}
-                              className="rounded-lg border border-[var(--gold)]/40 bg-[var(--gold)]/10 px-2.5 py-1.5 text-[11px] font-semibold text-[var(--navy)] hover:bg-[var(--gold)]/20"
+                              className="rounded-lg border border-[var(--gold)]/40 bg-[var(--gold)]/10 px-2.5 py-1.5 text-[11px] font-semibold text-[var(--gold-deep)] hover:bg-[var(--gold)]/20"
                             >
                               Calendrier
                             </button>
@@ -479,7 +479,7 @@ export default function AgencyDashboard({
       {/* FAB mobile */}
       <Link
         href={publishHref}
-        className="fixed bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--gold)] text-2xl font-light text-[var(--navy)] shadow-lg md:hidden"
+        className="fixed bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--gold)] text-2xl font-light text-white shadow-lg md:hidden"
         aria-label="Ajouter un bien"
       >
         +

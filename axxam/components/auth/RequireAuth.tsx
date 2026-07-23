@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect } from "react";
 import Link from "next/link";
@@ -68,7 +68,7 @@ export default function RequireAuth({ roles, children }: RequireAuthProps) {
           Votre agence <strong>{user.agencyName}</strong> est enregistrée. Un administrateur doit
           valider le compte avant que vous puissiez publier des annonces.
         </p>
-        <Link href="/" className="mt-6 inline-flex rounded-lg bg-[var(--gold)] px-5 py-2.5 text-xs font-bold uppercase text-[var(--navy)]">
+        <Link href="/" className="mt-6 inline-flex rounded-lg bg-[var(--gold)] px-5 py-2.5 text-xs font-bold uppercase text-white">
           Retour à l&apos;accueil
         </Link>
       </div>

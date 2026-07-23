@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
@@ -84,6 +84,12 @@ export default function PropertyPublishForm({
   const [bathrooms, setBathrooms] = useState(1);
   const [capacity, setCapacity] = useState(4);
   const [surface, setSurface] = useState("");
+  const [charges, setCharges] = useState("");
+  const [gpsLat, setGpsLat] = useState("");
+  const [gpsLng, setGpsLng] = useState("");
+  const [opsStatus, setOpsStatus] = useState<"available" | "occupied" | "maintenance">("available");
+  const [videoUrl, setVideoUrl] = useState("");
+  const [virtualTourUrl, setVirtualTourUrl] = useState("");
   const [description, setDescription] = useState("");
   const [amenities, setAmenities] = useState<string[]>([]);
   const [images, setImages] = useState<string[]>([]);
@@ -174,6 +180,12 @@ export default function PropertyPublishForm({
         images,
         host: resolvedHost,
         agencyId: resolvedAgencyId,
+        charges: Number(charges) || 0,
+        gpsLat: gpsLat ? Number(gpsLat) : null,
+        gpsLng: gpsLng ? Number(gpsLng) : null,
+        opsStatus,
+        videoUrl,
+        virtualTourUrl,
       });
 
       setSuccess(
@@ -445,6 +457,67 @@ export default function PropertyPublishForm({
               placeholder="120"
             />
           </div>
+          <div>
+            <label className={labelClass}>Charges (DA / mois)</label>
+            <input
+              type="number"
+              min={0}
+              className={inputClass}
+              value={charges}
+              onChange={(e) => setCharges(e.target.value)}
+              placeholder="5000"
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Statut opérationnel</label>
+            <select
+              className={inputClass}
+              value={opsStatus}
+              onChange={(e) =>
+                setOpsStatus(e.target.value as "available" | "occupied" | "maintenance")
+              }
+            >
+              <option value="available">Disponible</option>
+              <option value="occupied">Occupé</option>
+              <option value="maintenance">Maintenance</option>
+            </select>
+          </div>
+          <div>
+            <label className={labelClass}>GPS latitude</label>
+            <input
+              className={inputClass}
+              value={gpsLat}
+              onChange={(e) => setGpsLat(e.target.value)}
+              placeholder="36.7538"
+            />
+          </div>
+          <div>
+            <label className={labelClass}>GPS longitude</label>
+            <input
+              className={inputClass}
+              value={gpsLng}
+              onChange={(e) => setGpsLng(e.target.value)}
+              placeholder="3.0588"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className={labelClass}>Vidéo (URL YouTube / Vimeo)</label>
+            <input
+              className={inputClass}
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              placeholder="https://..."
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className={labelClass}>Visite virtuelle (URL)</label>
+            <input
+              className={inputClass}
+              value={virtualTourUrl}
+              onChange={(e) => setVirtualTourUrl(e.target.value)}
+              placeholder="https://..."
+            />
+          </div>
         </div>
 
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -494,7 +567,7 @@ export default function PropertyPublishForm({
                 onClick={() => toggleAmenity(item)}
                 className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
                   active
-                    ? "border-[var(--gold)] bg-[var(--gold)]/15 text-[var(--navy)]"
+                    ? "border-[var(--gold)] bg-[var(--gold)]/15 text-[var(--gold-deep)]"
                     : "border-black/10 bg-white text-[var(--muted)] hover:border-[var(--gold)]/40"
                 }`}
               >
@@ -538,7 +611,7 @@ export default function PropertyPublishForm({
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-full bg-[var(--gold)] px-8 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--navy)] hover:bg-[var(--gold-soft)] disabled:opacity-60 transition-colors"
+          className="rounded-full bg-[var(--gold)] px-8 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white hover:bg-[var(--gold-soft)] disabled:opacity-60 transition-colors"
         >
           {submitting ? "Envoi..." : "Soumettre pour validation"}
         </button>

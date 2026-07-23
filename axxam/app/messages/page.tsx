@@ -1,10 +1,198 @@
-import PlaceholderPage from "@/components/layout/PlaceholderPage";
+﻿"use client";
+
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { fetchConversations, fetchMessages, sendMessage } from "@/lib/api";
+import { getStoredUser } from "@/lib/auth-storage";
+import type { Conversation, Message } from "@/types/messaging";
+import SiteShell from "@/components/layout/SiteShell";
+import RequireAuth from "@/components/auth/RequireAuth";
+
+function MessagesInner() {
+  const params = useSearchParams();
+  const initialC = params.get("c");
+  const user = getStoredUser();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(initialC);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [text, setText] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await fetchConversations();
+        if (cancelled) return;
+        setConversations(res.data);
+        setActiveId((prev) => prev || res.data[0]?.id || null);
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err.message : "Erreur");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!activeId) return;
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const res = await fetchMessages(activeId);
+        if (!cancelled) setMessages(res.data);
+      } catch {
+        /* ignore */
+      }
+    };
+    load();
+    const t = setInterval(load, 8000);
+    return () => {
+      cancelled = true;
+      clearInterval(t);
+    };
+  }, [activeId]);
+
+  const active = conversations.find((c) => c.id === activeId);
+
+  const onSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeId || !text.trim()) return;
+    setSending(true);
+    try {
+      const res = await sendMessage(activeId, text.trim());
+      setMessages((prev) => [...prev, res.data]);
+      setText("");
+      const list = await fetchConversations();
+      setConversations(list.data);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Envoi impossible");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="container mx-auto max-w-5xl px-4 py-8 sm:px-6">
+      <div className="mb-6">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[var(--gold-deep)]">
+          Messagerie
+        </p>
+        <h1 className="mt-2 font-display text-3xl font-semibold text-[var(--navy)]">Discussions</h1>
+      </div>
+
+      {error && (
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <p className="text-sm text-[var(--muted)]">Chargement…</p>
+      ) : (
+        <div className="grid min-h-[480px] overflow-hidden rounded-2xl border border-black/5 bg-white lg:grid-cols-[280px_1fr]">
+          <aside className="border-b border-black/5 lg:border-b-0 lg:border-r">
+            {conversations.length === 0 && (
+              <p className="p-4 text-sm text-[var(--muted)]">
+                Aucune conversation. Ouvrez un message depuis une réservation.
+              </p>
+            )}
+            {conversations.map((c) => {
+              const title =
+                user?.id === c.clientId ? c.hostName || "Hôte" : c.clientName || "Voyageur";
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setActiveId(c.id)}
+                  className={`block w-full border-b border-black/5 px-4 py-3 text-left ${
+                    activeId === c.id ? "bg-[var(--surface)]" : "hover:bg-[var(--surface)]/60"
+                  }`}
+                >
+                  <p className="text-sm font-semibold text-[var(--navy)]">{title}</p>
+                  <p className="truncate text-xs text-[var(--muted)]">
+                    {c.propertyName || "Bien"} · {c.lastMessage || "—"}
+                  </p>
+                </button>
+              );
+            })}
+          </aside>
+
+          <div className="flex flex-col">
+            {active ? (
+              <>
+                <div className="border-b border-black/5 px-4 py-3">
+                  <p className="font-semibold text-[var(--navy)]">
+                    {user?.id === active.clientId ? active.hostName : active.clientName}
+                  </p>
+                  <p className="text-xs text-[var(--muted)]">{active.propertyName}</p>
+                </div>
+                <div className="flex-1 space-y-3 overflow-y-auto p-4">
+                  {messages.map((m) => {
+                    const mine = m.senderId === user?.id;
+                    return (
+                      <div
+                        key={m.id}
+                        className={`flex ${mine ? "justify-end" : "justify-start"}`}
+                      >
+                        <div
+                          className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${
+                            mine
+                              ? "bg-[var(--navy)] text-white"
+                              : "bg-[var(--surface)] text-[var(--ink)]"
+                          }`}
+                        >
+                          {m.body}
+                          <p
+                            className={`mt-1 text-[10px] ${mine ? "text-white/50" : "text-[var(--muted)]"}`}
+                          >
+                            {new Date(m.createdAt).toLocaleString("fr-DZ")}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <form onSubmit={onSend} className="flex gap-2 border-t border-black/5 p-3">
+                  <input
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    placeholder="Écrire un message…"
+                    className="flex-1 rounded-xl border border-black/10 px-3 py-2 text-sm"
+                  />
+                  <button
+                    type="submit"
+                    disabled={sending || !text.trim()}
+                    className="rounded-xl bg-[var(--gold)] px-4 py-2 text-xs font-bold uppercase text-white disabled:opacity-50"
+                  >
+                    Envoyer
+                  </button>
+                </form>
+              </>
+            ) : (
+              <p className="m-auto text-sm text-[var(--muted)]">Sélectionnez une conversation</p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function MessagesPage() {
   return (
-    <PlaceholderPage
-      title="Messagerie"
-      description="Échangez de façon sécurisée avec les propriétaires et les agences."
-    />
+    <RequireAuth roles={["client", "owner", "agency", "admin"]}>
+      <SiteShell>
+        <Suspense fallback={<p className="p-8 text-sm text-[var(--muted)]">Chargement…</p>}>
+          <MessagesInner />
+        </Suspense>
+      </SiteShell>
+    </RequireAuth>
   );
 }

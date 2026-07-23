@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -92,7 +92,7 @@ export default function FavorisPage() {
             <div className="mt-6 flex justify-center gap-3">
               <Link
                 href="/register"
-                className="rounded-full bg-[var(--gold)] px-5 py-2.5 text-xs font-bold uppercase text-[var(--navy)]"
+                className="rounded-full bg-[var(--gold)] px-5 py-2.5 text-xs font-bold uppercase text-white"
               >
                 Créer un compte
               </Link>
@@ -125,7 +125,7 @@ export default function FavorisPage() {
             </p>
             <Link
               href="/"
-              className="mt-6 inline-flex rounded-full bg-[var(--gold)] px-5 py-2.5 text-xs font-bold uppercase text-[var(--navy)]"
+              className="mt-6 inline-flex rounded-full bg-[var(--gold)] px-5 py-2.5 text-xs font-bold uppercase text-white"
             >
               Explorer les annonces
             </Link>

@@ -218,6 +218,13 @@ export type AgencyProperty = {
   transaction: TransactionType;
   status: PropertyStatus;
   unavailableDates?: string[];
+  assignedTo?: string | null;
+  charges?: number;
+  gpsLat?: number | null;
+  gpsLng?: number | null;
+  opsStatus?: "available" | "occupied" | "maintenance";
+  videoUrl?: string;
+  virtualTourUrl?: string;
   createdAt: string;
 };
 
@@ -241,4 +248,10 @@ export type PublishPropertyPayload = {
   status?: PropertyStatus;
   host?: string;
   agencyId?: string;
+  charges?: number;
+  gpsLat?: number | null;
+  gpsLng?: number | null;
+  opsStatus?: "available" | "occupied" | "maintenance";
+  videoUrl?: string;
+  virtualTourUrl?: string;
 };

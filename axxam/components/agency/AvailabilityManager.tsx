@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import AvailabilityCalendar from "@/components/calendar/AvailabilityCalendar";
@@ -92,7 +92,7 @@ export default function AvailabilityManager({
               type="button"
               disabled={saving}
               onClick={save}
-              className="rounded-lg bg-[var(--gold)] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-[var(--navy)] disabled:opacity-60"
+              className="rounded-lg bg-[var(--gold)] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white disabled:opacity-60"
             >
               {saving ? "Enregistrement..." : "Enregistrer le calendrier"}
             </button>

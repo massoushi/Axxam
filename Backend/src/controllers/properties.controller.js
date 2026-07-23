@@ -26,6 +26,7 @@ export async function listProperties(req, res, next) {
       transaction,
       agencyId,
       status,
+      assignedTo,
     } = req.query;
 
     const clauses = [];
@@ -54,6 +55,7 @@ export async function listProperties(req, res, next) {
     if (transaction) add("transaction_type = ?", String(transaction));
     if (status && status !== "all") add("status = ?", String(status));
     if (agencyId) add("agency_id = ?", String(agencyId));
+    if (assignedTo) add("assigned_to = ?", String(assignedTo));
     if (minPrice) add("price >= ?", Number(minPrice));
     if (maxPrice) add("price <= ?", Number(maxPrice));
 
@@ -132,6 +134,11 @@ export async function createProperty(req, res, next) {
     const status = "pending";
     const unavailableDates = normalizeDates(body.unavailableDates);
 
+    const hostName =
+      req.user.role === "agency"
+        ? req.user.agencyName || req.user.displayName
+        : req.user.displayName || "Hôte AXXAM";
+
     const values = [
       id,
       String(body.name).trim(),
@@ -151,13 +158,22 @@ export async function createProperty(req, res, next) {
       Number(body.capacity) || 1,
       Number(body.surface) || 0,
       JSON.stringify(Array.isArray(body.amenities) ? body.amenities : []),
-      String(body.host || "Agence AXXAM").trim(),
-      String(body.agencyId || "agence-demo"),
+      String(body.host || hostName).trim(),
+      req.user?.id || String(body.agencyId || "agence-demo"),
       String(body.type).toLowerCase(),
       String(body.category || "autre").toLowerCase(),
       body.transaction === "vente" ? "vente" : "location",
       status,
       JSON.stringify(unavailableDates),
+      body.assignedTo || null,
+      Number(body.charges) || 0,
+      body.gpsLat != null && body.gpsLat !== "" ? Number(body.gpsLat) : null,
+      body.gpsLng != null && body.gpsLng !== "" ? Number(body.gpsLng) : null,
+      ["available", "occupied", "maintenance"].includes(body.opsStatus)
+        ? body.opsStatus
+        : "available",
+      String(body.videoUrl || "").trim(),
+      String(body.virtualTourUrl || "").trim(),
     ];
 
     const result = await query(
@@ -165,11 +181,13 @@ export async function createProperty(req, res, next) {
       INSERT INTO properties (
         id, name, city, commune, quartier, loc, price, price_unit, rating, badge,
         img, images, description, bedrooms, bathrooms, capacity, surface, amenities,
-        host, agency_id, type, category, transaction_type, status, unavailable_dates
+        host, agency_id, type, category, transaction_type, status, unavailable_dates, assigned_to,
+        charges, gps_lat, gps_lng, ops_status, video_url, virtual_tour_url
       ) VALUES (
         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
         $11,$12::jsonb,$13,$14,$15,$16,$17,$18::jsonb,
-        $19,$20,$21,$22,$23,$24,$25::jsonb
+        $19,$20,$21,$22,$23,$24,$25::jsonb,$26,
+        $27,$28,$29,$30,$31,$32
       )
       RETURNING *
       `,
@@ -200,17 +218,30 @@ export async function updatePropertyStatus(req, res, next) {
       });
     }
 
+    const existing = await query(`SELECT * FROM properties WHERE id = $1`, [req.params.id]);
+    const prop = existing.rows[0];
+    if (!prop) {
+      return res.status(404).json({ success: false, message: "Bien introuvable" });
+    }
+
+    const isAdmin = req.user?.role === "admin";
+    const isOwner = prop.agency_id === req.user?.id;
+    if (!isAdmin && !isOwner) {
+      return res.status(403).json({ success: false, message: "Action non autorisée" });
+    }
+
+    // Seul l'admin peut approuver (active) ou refuser
+    if (!isAdmin && ["active", "rejected"].includes(status) && prop.status === "pending") {
+      return res.status(403).json({
+        success: false,
+        message: "Seule la modération AXXAM peut approuver ou refuser une annonce",
+      });
+    }
+
     const result = await query(
       `UPDATE properties SET status = $1 WHERE id = $2 RETURNING *`,
       [status, req.params.id]
     );
-
-    if (!result.rows[0]) {
-      return res.status(404).json({
-        success: false,
-        message: "Bien introuvable",
-      });
-    }
 
     const messages = {
       active: "Annonce approuvée et publiée sur l'accueil",
@@ -232,9 +263,132 @@ export async function updatePropertyStatus(req, res, next) {
   }
 }
 
+export async function updateProperty(req, res, next) {
+  try {
+    await ensurePropertiesTable();
+
+    const existing = await query(`SELECT * FROM properties WHERE id = $1`, [req.params.id]);
+    const prop = existing.rows[0];
+    if (!prop) {
+      return res.status(404).json({ success: false, message: "Bien introuvable" });
+    }
+
+    const isAdmin = req.user?.role === "admin";
+    const isOwner = prop.agency_id === req.user?.id;
+    if (!isAdmin && !isOwner) {
+      return res.status(403).json({ success: false, message: "Action non autorisée" });
+    }
+
+    const body = req.body || {};
+    const price = body.price !== undefined ? Number(body.price) : Number(prop.price);
+    const priceUnit =
+      body.priceUnit === "mois" || body.priceUnit === "nuit"
+        ? body.priceUnit
+        : prop.price_unit;
+    const name = body.name !== undefined ? String(body.name).trim() : prop.name;
+    const description =
+      body.description !== undefined ? String(body.description).trim() : prop.description;
+    const charges = body.charges !== undefined ? Number(body.charges) : Number(prop.charges || 0);
+    const gpsLat =
+      body.gpsLat !== undefined
+        ? body.gpsLat === null || body.gpsLat === ""
+          ? null
+          : Number(body.gpsLat)
+        : prop.gps_lat;
+    const gpsLng =
+      body.gpsLng !== undefined
+        ? body.gpsLng === null || body.gpsLng === ""
+          ? null
+          : Number(body.gpsLng)
+        : prop.gps_lng;
+    const opsStatus = ["available", "occupied", "maintenance"].includes(body.opsStatus)
+      ? body.opsStatus
+      : prop.ops_status || "available";
+    const videoUrl =
+      body.videoUrl !== undefined ? String(body.videoUrl).trim() : prop.video_url || "";
+    const virtualTourUrl =
+      body.virtualTourUrl !== undefined
+        ? String(body.virtualTourUrl).trim()
+        : prop.virtual_tour_url || "";
+
+    const result = await query(
+      `
+      UPDATE properties
+      SET price = $1, price_unit = $2, name = $3, description = $4,
+          charges = $5, gps_lat = $6, gps_lng = $7, ops_status = $8,
+          video_url = $9, virtual_tour_url = $10
+      WHERE id = $11
+      RETURNING *
+      `,
+      [
+        price,
+        priceUnit,
+        name,
+        description,
+        charges,
+        gpsLat,
+        gpsLng,
+        opsStatus,
+        videoUrl,
+        virtualTourUrl,
+        req.params.id,
+      ]
+    );
+
+    res.json({
+      success: true,
+      message: "Bien mis à jour",
+      data: mapPropertyRow(result.rows[0]),
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updatePropertyAssignment(req, res, next) {
+  try {
+    await ensurePropertiesTable();
+
+    const existing = await query(`SELECT * FROM properties WHERE id = $1`, [req.params.id]);
+    const prop = existing.rows[0];
+    if (!prop) {
+      return res.status(404).json({ success: false, message: "Bien introuvable" });
+    }
+
+    if (req.user.role !== "admin" && prop.agency_id !== req.user.id) {
+      return res.status(403).json({ success: false, message: "Action non autorisée" });
+    }
+
+    const assignedTo = req.body?.assignedTo ? String(req.body.assignedTo) : null;
+
+    const result = await query(
+      `UPDATE properties SET assigned_to = $1 WHERE id = $2 RETURNING *`,
+      [assignedTo, req.params.id]
+    );
+
+    res.json({
+      success: true,
+      message: assignedTo ? "Logement attribué" : "Attribution retirée",
+      data: mapPropertyRow(result.rows[0]),
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function updatePropertyAvailability(req, res, next) {
   try {
     await ensurePropertiesTable();
+
+    const existing = await query(`SELECT * FROM properties WHERE id = $1`, [req.params.id]);
+    const prop = existing.rows[0];
+    if (!prop) {
+      return res.status(404).json({ success: false, message: "Bien introuvable" });
+    }
+
+    if (req.user.role !== "admin" && prop.agency_id !== req.user.id) {
+      return res.status(403).json({ success: false, message: "Action non autorisée" });
+    }
 
     const unavailableDates = normalizeDates(req.body?.unavailableDates);
 
@@ -242,13 +396,6 @@ export async function updatePropertyAvailability(req, res, next) {
       `UPDATE properties SET unavailable_dates = $1::jsonb WHERE id = $2 RETURNING *`,
       [JSON.stringify(unavailableDates), req.params.id]
     );
-
-    if (!result.rows[0]) {
-      return res.status(404).json({
-        success: false,
-        message: "Bien introuvable",
-      });
-    }
 
     res.json({
       success: true,
@@ -264,16 +411,19 @@ export async function deleteProperty(req, res, next) {
   try {
     await ensurePropertiesTable();
 
+    const existing = await query(`SELECT * FROM properties WHERE id = $1`, [req.params.id]);
+    const prop = existing.rows[0];
+    if (!prop) {
+      return res.status(404).json({ success: false, message: "Bien introuvable" });
+    }
+
+    if (req.user.role !== "admin" && prop.agency_id !== req.user.id) {
+      return res.status(403).json({ success: false, message: "Action non autorisée" });
+    }
+
     const result = await query(`DELETE FROM properties WHERE id = $1 RETURNING *`, [
       req.params.id,
     ]);
-
-    if (!result.rows[0]) {
-      return res.status(404).json({
-        success: false,
-        message: "Bien introuvable",
-      });
-    }
 
     res.json({
       success: true,

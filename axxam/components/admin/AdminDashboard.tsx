@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -11,8 +11,9 @@ import {
 import type { AgencyProperty } from "@/types/agency";
 import { propertyTypeLabel } from "@/types/agency";
 import AdminAgenciesPanel from "@/components/admin/AdminAgenciesPanel";
+import AdminUsersPanel from "@/components/admin/AdminUsersPanel";
 
-type MainTab = "overview" | "moderation" | "agencies";
+type MainTab = "overview" | "moderation" | "agencies" | "users";
 type ModTab = "pending" | "active" | "rejected";
 
 function publisherLabel(property: AgencyProperty) {
@@ -226,6 +227,7 @@ export default function AdminDashboard() {
             { id: "overview", label: "Vue d'ensemble" },
             { id: "moderation", label: "Annonces" },
             { id: "agencies", label: "Agences" },
+            { id: "users", label: "Utilisateurs" },
           ] as const
         ).map((item) => (
           <button
@@ -519,6 +521,8 @@ export default function AdminDashboard() {
           }}
         />
       )}
+
+      {mainTab === "users" && <AdminUsersPanel />}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { query } from "../config/db.js";
+import { once } from "./once.js";
 
-export async function ensureBookingsTable() {
+export const ensureBookingsTable = once(async () => {
   await query(`
     CREATE TABLE IF NOT EXISTS bookings (
       id TEXT PRIMARY KEY,
@@ -24,11 +25,15 @@ export async function ensureBookingsTable() {
     );
   `);
 
+  await query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS payment_status TEXT NOT NULL DEFAULT 'unpaid';`);
+  await query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS paid_at TIMESTAMPTZ;`);
+
   await query(`CREATE INDEX IF NOT EXISTS idx_bookings_client ON bookings (client_id);`);
   await query(`CREATE INDEX IF NOT EXISTS idx_bookings_host ON bookings (host_id);`);
   await query(`CREATE INDEX IF NOT EXISTS idx_bookings_property ON bookings (property_id);`);
   await query(`CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings (status);`);
-}
+  await query(`CREATE INDEX IF NOT EXISTS idx_bookings_payment ON bookings (payment_status);`);
+});
 
 function toISODate(value) {
   if (!value) return "";
@@ -57,6 +62,8 @@ export function mapBookingRow(row) {
     totalPrice: Number(row.total_price) || 0,
     serviceFee: Number(row.service_fee) || 0,
     status: row.status,
+    paymentStatus: row.payment_status || "unpaid",
+    paidAt: row.paid_at || null,
     createdAt: row.created_at,
     propertyName: row.property_name || null,
     propertyImg: row.property_img || null,

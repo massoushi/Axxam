@@ -39,7 +39,7 @@ export function dashboardPathForRole(role: string): string {
     case "owner":
       return "/proprietaire";
     case "client":
-      return "/";
+      return "/compte/reservations";
     default:
       return "/";
   }

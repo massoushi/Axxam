@@ -114,7 +114,8 @@ export async function createBooking(req, res, next) {
     const pricePerNight = Number(property.price) || 0;
     const nights = stayNights.length;
     const totalPrice = nights * pricePerNight;
-    const serviceFee = Math.round(totalPrice * 0.05);
+    // Pas de paiement en ligne : le client règle chez l'agence / propriétaire
+    const serviceFee = 0;
     const id = slugId();
 
     const insert = await query(
@@ -122,11 +123,11 @@ export async function createBooking(req, res, next) {
       INSERT INTO bookings (
         id, property_id, client_id, host_id, check_in, check_out, guests,
         guest_first_name, guest_last_name, guest_email, guest_phone, special_requests,
-        nights, price_per_night, total_price, service_fee, status
+        nights, price_per_night, total_price, service_fee, status, payment_status
       ) VALUES (
         $1,$2,$3,$4,$5,$6,$7,
         $8,$9,$10,$11,$12,
-        $13,$14,$15,$16,'pending'
+        $13,$14,$15,$16,'pending','unpaid'
       )
       RETURNING *
       `,
@@ -159,7 +160,8 @@ export async function createBooking(req, res, next) {
 
     res.status(201).json({
       success: true,
-      message: "Demande de réservation envoyée. L'hôte va la confirmer.",
+      message:
+        "Demande envoyée à l'agence / propriétaire. Après confirmation, vous réglerez directement chez eux (pas de paiement en ligne).",
       data: {
         ...mapBookingRow(insert.rows[0]),
         propertyName: property.name,
@@ -277,12 +279,25 @@ export async function updateBookingStatus(req, res, next) {
       return res.status(403).json({ success: false, message: "Action non autorisée" });
     }
 
-    // Client peut seulement annuler
-    if (isClient && !isHost && status !== "cancelled") {
-      return res.status(403).json({
-        success: false,
-        message: "Vous pouvez uniquement annuler votre réservation",
-      });
+    // Client peut annuler, ou marquer terminé après la date de départ
+    if (isClient && !isHost) {
+      if (status === "cancelled") {
+        /* ok */
+      } else if (status === "completed") {
+        const checkOut = String(row.check_out).slice(0, 10);
+        const today = new Date().toISOString().slice(0, 10);
+        if (row.status !== "confirmed" || checkOut > today) {
+          return res.status(403).json({
+            success: false,
+            message: "Vous pourrez marquer le séjour terminé après la date de départ",
+          });
+        }
+      } else {
+        return res.status(403).json({
+          success: false,
+          message: "Vous pouvez uniquement annuler votre réservation",
+        });
+      }
     }
 
     const result = await query(
@@ -307,8 +322,8 @@ export async function updateBookingStatus(req, res, next) {
     }
 
     const messages = {
-      confirmed: "Réservation confirmée",
-      cancelled: "Réservation annulée",
+      confirmed: "Demande acceptée — le client réglera chez vous",
+      cancelled: "Demande annulée / refusée",
       completed: "Séjour marqué comme terminé",
       pending: "Remis en attente",
     };
@@ -316,6 +331,68 @@ export async function updateBookingStatus(req, res, next) {
     res.json({
       success: true,
       message: messages[status] || "Statut mis à jour",
+      data: mapBookingRow(result.rows[0]),
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** PATCH /bookings/:id/payment — hôte marque le règlement hors plateforme */
+export async function markBookingPayment(req, res, next) {
+  try {
+    await ensureBookingsTable();
+
+    const paymentStatus = String(req.body?.paymentStatus || "").toLowerCase();
+    if (!["paid", "unpaid"].includes(paymentStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: "paymentStatus invalide (paid|unpaid)",
+      });
+    }
+
+    const found = await query(`SELECT * FROM bookings WHERE id = $1`, [req.params.id]);
+    const row = found.rows[0];
+    if (!row) {
+      return res.status(404).json({ success: false, message: "Réservation introuvable" });
+    }
+
+    const isHost =
+      req.user.id === row.host_id ||
+      req.user.role === "admin" ||
+      (req.user.role === "agency" && req.user.id === row.host_id);
+
+    if (!isHost) {
+      return res.status(403).json({
+        success: false,
+        message: "Seul l'hôte / l'agence peut marquer le règlement",
+      });
+    }
+
+    if (row.status !== "confirmed" && row.status !== "completed") {
+      return res.status(400).json({
+        success: false,
+        message: "Confirmez d'abord la demande avant de marquer un paiement",
+      });
+    }
+
+    const result = await query(
+      `
+      UPDATE bookings
+      SET payment_status = $1,
+          paid_at = CASE WHEN $1 = 'paid' THEN COALESCE(paid_at, NOW()) ELSE NULL END
+      WHERE id = $2
+      RETURNING *
+      `,
+      [paymentStatus, req.params.id]
+    );
+
+    res.json({
+      success: true,
+      message:
+        paymentStatus === "paid"
+          ? "Règlement enregistré (paiement hors plateforme)"
+          : "Paiement remis en attente",
       data: mapBookingRow(result.rows[0]),
     });
   } catch (err) {

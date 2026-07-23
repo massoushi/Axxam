@@ -5,6 +5,13 @@ import { ensurePropertiesTable } from "./db/properties.js";
 import { ensureUsersTable } from "./db/users.js";
 import { ensureBookingsTable } from "./db/bookings.js";
 import { ensureFavoritesTable } from "./db/favorites.js";
+import { ensureInvoicesTable } from "./db/invoices.js";
+import { ensureMessagesTables } from "./db/messages.js";
+import { ensureReviewsTable } from "./db/reviews.js";
+import { ensureNotificationsTable } from "./db/notifications.js";
+import { ensureAgencyTeamTables } from "./db/agencyTeam.js";
+import { ensureAgencyCrmTables } from "./db/agencyCrm.js";
+import { ensureAdminTables } from "./db/admin.js";
 
 async function start() {
   if (!env.databaseUrl) {
@@ -23,6 +30,14 @@ async function start() {
     console.log("Table bookings prête");
     await ensureFavoritesTable();
     console.log("Table favorites prête");
+    await ensureInvoicesTable();
+    await ensureMessagesTables();
+    await ensureReviewsTable();
+    await ensureNotificationsTable();
+    await ensureAgencyTeamTables();
+    await ensureAgencyCrmTables();
+    await ensureAdminTables();
+    console.log("Tables MVP + CRM agence + admin prêtes");
   } catch (err) {
     console.error("Connexion PostgreSQL échouée:", err.message);
     process.exit(1);

@@ -37,6 +37,8 @@ export type Property = {
   dates: string;
   price: string;
   total: string;
+  priceValue?: number;
+  surface?: number;
   rating: string;
   badge: string | null;
   img: string;

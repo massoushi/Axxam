@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -136,6 +136,7 @@ export default function AnnoncesBrowse() {
     <SiteShell>
       <section className="container mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <div className="mb-8">
+          <div className="mb-3 h-0.5 w-10 rounded-full bg-[var(--gold)]" />
           <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[var(--gold-deep)]">
             AXXAM
           </p>
@@ -149,7 +150,7 @@ export default function AnnoncesBrowse() {
 
         <form
           onSubmit={applyFilters}
-          className="mb-10 grid gap-3 rounded-2xl border border-black/5 bg-white p-4 sm:grid-cols-2 lg:grid-cols-6 lg:items-end"
+          className="mb-10 grid gap-3 rounded-3xl border border-[var(--sand)]/70 bg-white p-4 shadow-[var(--shadow-soft)] sm:grid-cols-2 lg:grid-cols-6 lg:items-end"
         >
           <div className="lg:col-span-2">
             <label className="mb-1.5 block text-[11px] font-semibold text-[var(--navy)]">Recherche</label>
@@ -257,7 +258,7 @@ export default function AnnoncesBrowse() {
           <div className="flex flex-wrap gap-2 sm:col-span-2 lg:col-span-6">
             <button
               type="submit"
-              className="rounded-full bg-[var(--gold)] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-[var(--navy)]"
+              className="rounded-full bg-[var(--gold)] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white"
             >
               Filtrer
             </button>
@@ -296,7 +297,7 @@ export default function AnnoncesBrowse() {
               <button
                 type="button"
                 onClick={resetFilters}
-                className="mt-6 inline-flex rounded-full bg-[var(--gold)] px-5 py-2.5 text-xs font-bold uppercase text-[var(--navy)]"
+                className="mt-6 inline-flex rounded-full bg-[var(--gold)] px-5 py-2.5 text-xs font-bold uppercase text-white"
               >
                 Voir toutes les annonces
               </button>

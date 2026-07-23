@@ -1,6 +1,7 @@
 import { query } from "../config/db.js";
+import { once } from "./once.js";
 
-export async function ensureFavoritesTable() {
+export const ensureFavoritesTable = once(async () => {
   await query(`
     CREATE TABLE IF NOT EXISTS favorites (
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -10,4 +11,4 @@ export async function ensureFavoritesTable() {
     );
   `);
   await query(`CREATE INDEX IF NOT EXISTS idx_favorites_user ON favorites (user_id);`);
-}
+});

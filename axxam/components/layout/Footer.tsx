@@ -4,6 +4,7 @@ import Link from "next/link";
 import Logo from "@/components/layout/Logo";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { dashboardPathForRole } from "@/lib/auth-storage";
+import { roleLabel } from "@/lib/role-nav";
 
 export default function Footer() {
   const { user, loading, logout } = useAuth();
@@ -13,51 +14,74 @@ export default function Footer() {
 
     if (!user) {
       return [
-        { label: "Espace agence", href: "/agence" },
         { label: "Connexion", href: "/login" },
         { label: "Créer un compte", href: "/register" },
+        { label: "Devenir hôte", href: "/register" },
       ];
     }
 
-    const links: { label: string; href: string; onClick?: () => void }[] = [];
+    const links: { label: string; href: string; onClick?: () => void }[] = [
+      {
+        label: `Mon espace (${roleLabel(user.role)})`,
+        href: dashboardPathForRole(user.role),
+      },
+    ];
 
     if (user.role === "client") {
-      links.push({ label: "Mon espace", href: "/compte/reservations" });
-      links.push({ label: "Mon profil", href: "/compte/profil" });
-    } else if (user.role === "agency") {
-      links.push({ label: "Espace agence", href: "/agence" });
-    } else if (user.role === "owner") {
-      links.push({ label: "Espace propriétaire", href: "/proprietaire" });
-    } else if (user.role === "admin") {
-      links.push({ label: "Espace admin", href: "/admin" });
-    } else {
-      links.push({ label: "Mon tableau de bord", href: dashboardPathForRole(user.role) });
+      links.push({ label: "Mes réservations", href: "/compte/reservations" });
+      links.push({ label: "Favoris", href: "/favoris" });
+    }
+    if (user.role === "owner") {
+      links.push({ label: "Publier", href: "/proprietaire/publier" });
+      links.push({ label: "Revenus", href: "/proprietaire/revenus" });
+    }
+    if (user.role === "agency") {
+      links.push({ label: "Équipe", href: "/agence/equipe" });
+      links.push({ label: "Finances", href: "/agence/finances" });
+    }
+    if (user.role === "admin") {
+      links.push({ label: "Modération", href: "/admin" });
     }
 
     links.push({ label: "Déconnexion", href: "#", onClick: () => logout() });
-
     return links;
   })();
+
+  const hebergementLinks =
+    user?.role === "client" || !user
+      ? [
+          { label: "Hébergements", href: "/hebergements" },
+          { label: "Ventes", href: "/immobilier" },
+          { label: "Annonces", href: "/annonces" },
+        ]
+      : user.role === "owner"
+        ? [
+            { label: "Mes biens", href: "/proprietaire" },
+            { label: "Publier", href: "/proprietaire/publier" },
+            { label: "Voir le site", href: "/" },
+          ]
+        : user.role === "agency"
+          ? [
+              { label: "Portefeuille", href: "/agence" },
+              { label: "Publier", href: "/agence/publier" },
+              { label: "Voir le site", href: "/" },
+            ]
+          : [
+              { label: "Dashboard", href: "/admin" },
+              { label: "Site public", href: "/" },
+            ];
 
   const columns = [
     {
       title: "Assistance",
       links: [
-        { label: "Centre d'aide", href: "/messages" },
-        { label: "Signaler un problème", href: "/messages" },
+        { label: "Messages", href: "/messages" },
         { label: "Contact", href: "/messages" },
       ],
     },
     {
-      title: "Hébergement",
-      links: [
-        {
-          label: "Mettre son bien",
-          href: user?.role === "agency" ? "/agence" : "/proprietaire",
-        },
-        { label: "Annonces", href: "/annonces" },
-        { label: "Favoris", href: "/favoris" },
-      ],
+      title: user?.role === "client" || !user ? "Explorer" : "Gestion",
+      links: hebergementLinks,
     },
     {
       title: "AXXAM",
@@ -66,13 +90,19 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="mt-16 bg-[var(--navy)] text-white">
+    <footer className="mt-20 bg-[var(--navy)] text-white">
+      <div className="h-1 bg-gradient-to-r from-[var(--gold-deep)] via-[var(--gold)] to-[var(--sand)]" />
       <div className="container mx-auto max-w-6xl px-4 sm:px-6 py-12 sm:py-14">
         <div className="grid grid-cols-2 gap-10 md:grid-cols-4">
           <div className="col-span-2 md:col-span-1">
-            <Logo height={64} />
-            <p className="mt-5 max-w-[240px] text-sm leading-relaxed text-white/50">
-              La plateforme immobilière & hébergement de référence en Algérie.
+            <Logo size={72} onDark />
+            <p className="mt-5 font-display text-xl tracking-[0.08em] text-white">
+              ax<span className="text-[var(--gold)]">x</span>am
+            </p>
+            <p className="mt-3 max-w-[240px] text-sm leading-relaxed text-white/50">
+              {user
+                ? `Connecté en tant que ${roleLabel(user.role).toLowerCase()}.`
+                : "La plateforme immobilière & hébergement de référence en Algérie."}
             </p>
           </div>
 
@@ -112,8 +142,12 @@ export default function Footer() {
         <div className="container mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-5 text-xs text-white/40 sm:flex-row sm:px-6">
           <span>© 2026 AXXAM. Tous droits réservés.</span>
           <div className="flex gap-5">
-            <span className="cursor-default">Confidentialité</span>
-            <span className="cursor-default">Conditions</span>
+            <Link href="/confidentialite" className="hover:text-white">
+              Confidentialité
+            </Link>
+            <Link href="/conditions" className="hover:text-white">
+              Conditions
+            </Link>
           </div>
         </div>
       </div>

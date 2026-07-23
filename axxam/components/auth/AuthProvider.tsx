@@ -31,11 +31,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const syncFromStorage = useCallback(() => {
-    setToken(getToken());
-    setUser(getStoredUser());
-  }, []);
-
   const refresh = useCallback(async () => {
     const t = getToken();
     if (!t) {
@@ -56,13 +51,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    syncFromStorage();
-    refresh().finally(() => setLoading(false));
+    let cancelled = false;
+    (async () => {
+      const t = getToken();
+      if (!t) {
+        if (!cancelled) {
+          setUser(null);
+          setToken(null);
+          setLoading(false);
+        }
+        return;
+      }
+      try {
+        const res = await fetchMe();
+        if (cancelled) return;
+        setSession(t, res.data.user);
+        setUser(res.data.user);
+        setToken(t);
+      } catch {
+        if (cancelled) return;
+        clearSession();
+        setUser(null);
+        setToken(null);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
 
-    const onAuth = () => syncFromStorage();
+    const onAuth = () => {
+      setToken(getToken());
+      setUser(getStoredUser());
+    };
     window.addEventListener("axxam-auth", onAuth);
-    return () => window.removeEventListener("axxam-auth", onAuth);
-  }, [refresh, syncFromStorage]);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("axxam-auth", onAuth);
+    };
+  }, []);
 
   const login = useCallback(async (email: string, password: string) => {
     const res = await loginRequest(email, password);

@@ -437,7 +437,11 @@ export async function listUsers(req, res, next) {
 
     const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
     const result = await query(
-      `SELECT * FROM users ${where} ORDER BY created_at DESC`,
+      `SELECT id, role, email, first_name, last_name, phone, wilaya, avatar,
+              agency_name, manager_name, rc_number, nif, address, logo, status,
+              subscription_plan, commission_rate, created_at
+       FROM users ${where}
+       ORDER BY created_at DESC`,
       params
     );
 

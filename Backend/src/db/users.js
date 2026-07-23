@@ -1,7 +1,8 @@
 import { query } from "../config/db.js";
 import bcrypt from "bcryptjs";
+import { once } from "./once.js";
 
-export async function ensureUsersTable() {
+export const ensureUsersTable = once(async () => {
   await query(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
@@ -24,11 +25,14 @@ export async function ensureUsersTable() {
     );
   `);
 
+  await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_plan TEXT NOT NULL DEFAULT 'free';`);
+  await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS commission_rate NUMERIC NOT NULL DEFAULT 0.05;`);
+
   await query(`CREATE INDEX IF NOT EXISTS idx_users_email ON users (LOWER(email));`);
   await query(`CREATE INDEX IF NOT EXISTS idx_users_role ON users (role);`);
 
   await seedAdminIfNeeded();
-}
+});
 
 async function seedAdminIfNeeded() {
   const email = (process.env.ADMIN_EMAIL || "admin@axxam.dz").toLowerCase();
@@ -68,6 +72,8 @@ export function mapUserRow(row) {
     address: row.address || "",
     logo: row.logo || null,
     status: row.status,
+    subscriptionPlan: row.subscription_plan || "free",
+    commissionRate: Number(row.commission_rate) || 0.05,
     displayName:
       row.role === "agency"
         ? row.agency_name || "Agence"

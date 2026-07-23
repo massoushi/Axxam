@@ -27,6 +27,8 @@ export function toPublicProperty(item: AgencyProperty): Property {
     dates,
     price: priceLabel,
     total: priceLabel,
+    priceValue: Number(item.price) || 0,
+    surface: Number(item.surface) || 0,
     rating: item.rating && item.rating !== "—" ? item.rating : "Nouveau",
     badge: item.badge,
     img: item.img,

@@ -12,9 +12,11 @@ function isAllowedOrigin(origin) {
   if (!origin) return true;
   if (env.clientOrigins.includes("*")) return true;
   if (env.clientOrigins.includes(origin)) return true;
-  // Autorise les fronts Render AXXAM (évite les blocages CORS en prod)
   try {
     const host = new URL(origin).hostname;
+    // Dev local : tous les ports localhost (3000, 3001, etc.)
+    if (host === "localhost" || host === "127.0.0.1") return true;
+    // Fronts Render AXXAM
     if (host.endsWith(".onrender.com") && host.includes("axxam")) return true;
   } catch {
     /* ignore */

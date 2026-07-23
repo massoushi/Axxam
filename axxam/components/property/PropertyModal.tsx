@@ -1,12 +1,14 @@
 "use client";
 
 import PropertyImage from "@/components/ui/PropertyImage";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Property } from "@/types/property";
+import type { Review as ApiReview } from "@/types/messaging";
 import BookingForm from "@/components/property/BookingForm";
 import AvailabilityCalendar from "@/components/calendar/AvailabilityCalendar";
 import AuthGateModal from "@/components/auth/AuthGateModal";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { fetchPropertyReviews } from "@/lib/api";
 
 type PropertyModalProps = {
   property: Property;
@@ -21,6 +23,22 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
   const [showAuthGate, setShowAuthGate] = useState(false);
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
+  const [reviews, setReviews] = useState<ApiReview[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetchPropertyReviews(property.id);
+        if (!cancelled) setReviews(res.data);
+      } catch {
+        if (!cancelled) setReviews([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [property.id]);
 
   if (!property) return null;
 
@@ -100,7 +118,7 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
                 <div className="lg:col-span-2">
                   <div className="flex items-start justify-between mb-4">
                     <div>
-                      <h2 className="text-2xl font-serif font-bold text-[#0F1E2C]">{property.name}</h2>
+                      <h2 className="text-2xl font-serif font-bold text-[var(--navy)]">{property.name}</h2>
                       <p className="text-gray-500 text-sm flex items-center gap-1 mt-1">
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
@@ -109,10 +127,10 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="bg-[#C5A880]/10 text-[#C5A880] text-sm font-bold px-3 py-1 rounded-lg">
+                      <span className="bg-[var(--gold)]/10 text-[var(--gold)] text-sm font-bold px-3 py-1 rounded-lg">
                         ★ {property.rating}
                       </span>
-                      <span className="text-gray-400 text-xs">{property.reviews?.length || 0} avis</span>
+                      <span className="text-gray-400 text-xs">{reviews.length} avis</span>
                     </div>
                   </div>
 
@@ -129,7 +147,7 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
                         onClick={() => setSelectedTab(tab.id)}
                         className={`pb-2 text-sm font-medium transition-colors border-b-2 ${
                           selectedTab === tab.id
-                            ? "border-[#C5A880] text-[#0F1E2C]"
+                            ? "border-[var(--gold)] text-[var(--navy)]"
                             : "border-transparent text-gray-400 hover:text-gray-600"
                         }`}
                       >
@@ -144,30 +162,30 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
                       <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-xl">
                         <div>
                           <p className="text-xs text-gray-400">Chambres</p>
-                          <p className="font-semibold text-[#0F1E2C]">{property.bedrooms}</p>
+                          <p className="font-semibold text-[var(--navy)]">{property.bedrooms}</p>
                         </div>
                         <div>
                           <p className="text-xs text-gray-400">Salles de bain</p>
-                          <p className="font-semibold text-[#0F1E2C]">{property.bathrooms}</p>
+                          <p className="font-semibold text-[var(--navy)]">{property.bathrooms}</p>
                         </div>
                         <div>
                           <p className="text-xs text-gray-400">Capacité</p>
-                          <p className="font-semibold text-[#0F1E2C]">{property.capacity} voyageurs</p>
+                          <p className="font-semibold text-[var(--navy)]">{property.capacity} voyageurs</p>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-4 p-4 border border-gray-200 rounded-xl mt-4">
-                        <div className="w-12 h-12 rounded-full bg-[#C5A880]/20 flex items-center justify-center text-[#C5A880] font-bold text-lg">
+                        <div className="w-12 h-12 rounded-full bg-[var(--gold)]/20 flex items-center justify-center text-[var(--gold)] font-bold text-lg">
                           {property.host?.charAt(0)}
                         </div>
                         <div>
-                          <p className="font-semibold text-[#0F1E2C] text-sm">{property.host}</p>
+                          <p className="font-semibold text-[var(--navy)] text-sm">{property.host}</p>
                           <p className="text-xs text-gray-400">Hôte AXXAM</p>
                         </div>
                       </div>
 
                       <div className="mt-6 rounded-xl border border-gray-200 bg-[#FBF9F6] p-4">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-[#0F1E2C] mb-3">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-[var(--navy)] mb-3">
                           Disponibilités
                         </p>
                         <AvailabilityCalendar
@@ -189,7 +207,7 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
                     <div className="grid grid-cols-2 gap-2">
                       {property.amenities.map((amenity) => (
                         <div key={amenity} className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-lg">
-                          <svg className="w-4 h-4 text-[#C5A880]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 text-[var(--gold)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
                           <span className="text-sm text-gray-600">{amenity}</span>
@@ -200,17 +218,26 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
 
                   {selectedTab === "reviews" && (
                     <div className="space-y-4">
-                      {property.reviews?.map((review, idx) => (
-                        <div key={idx} className="border-b border-gray-100 pb-4 last:border-0">
+                      {reviews.length === 0 && (
+                        <p className="text-sm text-gray-500">
+                          Pas encore d&apos;avis. Les voyageurs notent après leur séjour.
+                        </p>
+                      )}
+                      {reviews.map((review) => (
+                        <div key={review.id} className="border-b border-gray-100 pb-4 last:border-0">
                           <div className="flex items-center justify-between mb-1">
-                            <span className="font-semibold text-[#0F1E2C] text-sm">{review.name}</span>
-                            <span className="text-xs text-gray-400">{review.date}</span>
+                            <span className="font-semibold text-[var(--navy)] text-sm">
+                              {review.clientName || "Voyageur"}
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              {new Date(review.createdAt).toLocaleDateString("fr-DZ")}
+                            </span>
                           </div>
                           <div className="flex items-center gap-1 mb-1">
                             {[...Array(5)].map((_, i) => (
                               <svg
                                 key={i}
-                                className={`w-3.5 h-3.5 ${i < review.rating ? "text-[#C5A880]" : "text-gray-300"}`}
+                                className={`w-3.5 h-3.5 ${i < review.rating ? "text-[var(--gold)]" : "text-gray-300"}`}
                                 fill="currentColor"
                                 viewBox="0 0 20 20"
                               >
@@ -218,7 +245,7 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
                               </svg>
                             ))}
                           </div>
-                          <p className="text-sm text-gray-600">{review.text}</p>
+                          <p className="text-sm text-gray-600">{review.comment}</p>
                         </div>
                       ))}
                     </div>
@@ -228,19 +255,19 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
                 <div className="lg:col-span-1">
                   <div className="sticky top-6 bg-[#FBF9F6] rounded-xl p-6 border border-gray-200">
                     <div className="flex items-center justify-between mb-4">
-                      <span className="text-2xl font-bold text-[#0F1E2C]">
+                      <span className="text-2xl font-bold text-[var(--navy)]">
                         {property.price} DZD
                         <span className="text-sm font-normal text-gray-400"> / nuit</span>
                       </span>
                       <div className="flex items-center gap-1 text-sm">
-                        <span className="text-[#C5A880]">★</span>
+                        <span className="text-[var(--gold)]">★</span>
                         <span className="font-semibold">{property.rating}</span>
-                        <span className="text-gray-400">({property.reviews?.length || 0})</span>
+                        <span className="text-gray-400">({reviews.length})</span>
                       </div>
                     </div>
 
                     <div className="mb-4 rounded-lg border border-gray-200 bg-white p-3 text-sm">
-                      <p className="text-xs font-semibold text-[#0F1E2C] mb-2">Votre sélection</p>
+                      <p className="text-xs font-semibold text-[var(--navy)] mb-2">Votre sélection</p>
                       {checkIn && checkOut ? (
                         <p className="text-gray-600">
                           {checkIn} → {checkOut}
@@ -256,11 +283,11 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
                     <button
                       onClick={handleReserveClick}
                       disabled={!canBook || loading}
-                      className="w-full bg-[#C5A880] text-[#0F1E2C] py-3 rounded-xl font-bold hover:bg-[#B3966E] transition-colors mb-3 disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="w-full bg-[var(--gold)] text-white py-3 rounded-xl font-bold hover:bg-[var(--gold-deep)] transition-colors mb-3 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       {canBook ? "Demander la réservation" : "Choisir des dates d'abord"}
                     </button>
-                    <button className="w-full border border-gray-300 text-[#0F1E2C] py-3 rounded-xl font-medium hover:border-[#0F1E2C] transition-colors text-sm">
+                    <button className="w-full border border-gray-300 text-[var(--navy)] py-3 rounded-xl font-medium hover:border-[var(--navy)] transition-colors text-sm">
                       Contacter l&apos;hôte
                     </button>
                   </div>

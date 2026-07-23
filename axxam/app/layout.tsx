@@ -18,8 +18,9 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "AXXAM — Immobilier & Hébergement",
-  description: "Des lieux d'exception, des expériences uniques en Algérie.",
+  title: "AXXAM — Hébergement & Location · Algérie",
+  description:
+    "أخام — Trouvez, réservez et louez en Algérie. Séjours, villas et biens immobiliers.",
 };
 
 export default function RootLayout({
