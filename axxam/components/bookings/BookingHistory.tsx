@@ -245,6 +245,17 @@ export default function BookingHistory({ mode, title, subtitle }: BookingHistory
                       à régler chez l’hôte / l’agence
                     </span>
                   </p>
+                  <div className="mt-3 inline-flex flex-col items-start rounded-xl border border-[var(--sand)] bg-[var(--sand-soft)]/50 px-3 py-2">
+                    <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
+                      Code-barres · {b.id}
+                    </p>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={getBarcodeUrl(b.id)}
+                      alt={`Code-barres ${b.id}`}
+                      className="h-14 max-w-full bg-white p-1"
+                    />
+                  </div>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
