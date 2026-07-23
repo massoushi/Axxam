@@ -10,6 +10,7 @@ import reviewsRoutes from "./reviews.routes.js";
 import notificationsRoutes from "./notifications.routes.js";
 import agencyTeamRoutes from "./agencyTeam.routes.js";
 import adminRoutes from "./admin.routes.js";
+import barcodeRoutes from "./barcode.routes.js";
 
 const router = Router();
 
@@ -24,5 +25,6 @@ router.use("/reviews", reviewsRoutes);
 router.use("/notifications", notificationsRoutes);
 router.use("/agency", agencyTeamRoutes);
 router.use("/admin", adminRoutes);
+router.use("/barcode", barcodeRoutes);
 
 export default router;
