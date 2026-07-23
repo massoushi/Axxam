@@ -6,10 +6,16 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { dashboardPathForRole } from "@/lib/auth-storage";
 import { roleLabel } from "@/lib/role-nav";
 
+type FooterLink = {
+  label: string;
+  href: string;
+  onClick?: () => void;
+};
+
 export default function Footer() {
   const { user, loading, logout } = useAuth();
 
-  const axxamLinks = (() => {
+  const axxamLinks = ((): FooterLink[] => {
     if (loading) return [];
 
     if (!user) {
@@ -20,7 +26,7 @@ export default function Footer() {
       ];
     }
 
-    const links: { label: string; href: string; onClick?: () => void }[] = [
+    const links: FooterLink[] = [
       {
         label: `Mon espace (${roleLabel(user.role)})`,
         href: dashboardPathForRole(user.role),
@@ -47,7 +53,7 @@ export default function Footer() {
     return links;
   })();
 
-  const hebergementLinks =
+  const hebergementLinks: FooterLink[] =
     user?.role === "client" || !user
       ? [
           { label: "Hébergements", href: "/hebergements" },
@@ -71,7 +77,7 @@ export default function Footer() {
               { label: "Site public", href: "/" },
             ];
 
-  const columns = [
+  const columns: { title: string; links: FooterLink[] }[] = [
     {
       title: "Assistance",
       links: [
@@ -114,7 +120,7 @@ export default function Footer() {
               <ul className="mt-4 space-y-3">
                 {col.links.map((link) => (
                   <li key={link.label}>
-                    {"onClick" in link && link.onClick ? (
+                    {link.onClick ? (
                       <button
                         type="button"
                         onClick={link.onClick}
