@@ -31,6 +31,7 @@ function validatePhone(phone) {
 }
 
 function appVerifyUrl(token) {
+  // Lien principal AXXAM ; /auth/callback existe aussi (compat Redirect URLs Supabase)
   return `${env.publicAppUrl}/verifier-email?token=${encodeURIComponent(token)}`;
 }
 
