@@ -1,6 +1,7 @@
 "use client";
 
 import PropertyImage from "@/components/ui/PropertyImage";
+import VerifiedBadge from "@/components/trust/VerifiedBadge";
 import type { Property } from "@/types/property";
 
 type ListingCardProps = {
@@ -15,10 +16,7 @@ export default function ListingCard({ item, id, favorites, toggleFavorite, onCar
   const isFav = favorites.includes(id);
 
   return (
-    <article
-      className="group cursor-pointer"
-      onClick={() => onCardClick(item)}
-    >
+    <article className="group cursor-pointer" onClick={() => onCardClick(item)}>
       <div className="relative aspect-square overflow-hidden rounded-2xl bg-[var(--sand-soft)] shadow-[var(--shadow-soft)] ring-1 ring-black/[0.04] transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[var(--shadow-lift)]">
         <PropertyImage
           src={item.img}
@@ -30,11 +28,14 @@ export default function ListingCard({ item, id, favorites, toggleFavorite, onCar
 
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent opacity-60" />
 
-        {item.badge && (
-          <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold tracking-wide text-[var(--navy)] shadow-sm backdrop-blur-sm">
-            {item.badge}
-          </span>
-        )}
+        <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
+          {item.verified !== false && <VerifiedBadge />}
+          {item.badge && (
+            <span className="rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold tracking-wide text-[var(--navy)] shadow-sm backdrop-blur-sm">
+              {item.badge}
+            </span>
+          )}
+        </div>
 
         <button
           onClick={(e) => {

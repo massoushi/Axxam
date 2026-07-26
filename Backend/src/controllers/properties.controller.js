@@ -27,6 +27,7 @@ export async function listProperties(req, res, next) {
       agencyId,
       status,
       assignedTo,
+      amenity,
     } = req.query;
 
     const clauses = [];
@@ -58,6 +59,14 @@ export async function listProperties(req, res, next) {
     if (assignedTo) add("assigned_to = ?", String(assignedTo));
     if (minPrice) add("price >= ?", Number(minPrice));
     if (maxPrice) add("price <= ?", Number(maxPrice));
+
+    if (amenity) {
+      params.push(`%${String(amenity).toLowerCase()}%`);
+      clauses.push(`EXISTS (
+        SELECT 1 FROM jsonb_array_elements_text(COALESCE(amenities, '[]'::jsonb)) AS a(val)
+        WHERE LOWER(a.val) LIKE $${params.length}
+      )`);
+    }
 
     const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
     const result = await query(

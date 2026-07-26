@@ -83,7 +83,7 @@ export default function ConditionsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="5. Réservations et paiements">
+      <LegalSection id="paiements" title="5. Réservations et paiements">
         <p>
           Sur AXXAM, le client envoie une <strong>demande de réservation</strong> à l&apos;agence ou
           au propriétaire. La demande n&apos;est ferme qu&apos;après acceptation par l&apos;hôte.

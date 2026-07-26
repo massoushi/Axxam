@@ -48,6 +48,11 @@ export function toPublicProperty(item: AgencyProperty): Property {
     transaction: item.transaction,
     priceUnit: item.priceUnit,
     priceSuffix: suffix,
+    city: item.city,
+    agencyId: item.agencyId,
+    gpsLat: item.gpsLat ?? null,
+    gpsLng: item.gpsLng ?? null,
+    verified: item.status === "active",
   };
 }
 

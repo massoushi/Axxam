@@ -73,7 +73,7 @@ export default function Header() {
           <div className="flex items-center gap-1.5 sm:gap-2.5">
             {!loading && !user && (
               <Link
-                href="/register"
+                href="/publier"
                 className="hidden text-[11px] font-semibold tracking-wide text-white/80 transition-colors hover:text-[var(--gold)] md:inline"
               >
                 Mettre mon bien
@@ -179,7 +179,7 @@ export default function Header() {
               {!loading && !user && (
                 <>
                   <Link
-                    href="/register"
+                    href="/publier"
                     onClick={() => setMenuOpen(false)}
                     className="rounded-xl px-4 py-3 text-sm font-semibold text-white/80 hover:bg-white/10"
                   >

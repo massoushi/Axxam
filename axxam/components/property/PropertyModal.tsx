@@ -7,8 +7,11 @@ import type { Review as ApiReview } from "@/types/messaging";
 import BookingForm from "@/components/property/BookingForm";
 import AvailabilityCalendar from "@/components/calendar/AvailabilityCalendar";
 import AuthGateModal from "@/components/auth/AuthGateModal";
+import PayOnSiteNotice from "@/components/trust/PayOnSiteNotice";
+import VerifiedBadge from "@/components/trust/VerifiedBadge";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { fetchPropertyReviews } from "@/lib/api";
+import { hostContactMessage, whatsappHref } from "@/lib/whatsapp";
 
 type PropertyModalProps = {
   property: Property;
@@ -179,8 +182,11 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
                           {property.host?.charAt(0)}
                         </div>
                         <div>
-                          <p className="font-semibold text-[var(--navy)] text-sm">{property.host}</p>
-                          <p className="text-xs text-gray-400">Hôte AXXAM</p>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-semibold text-[var(--navy)] text-sm">{property.host}</p>
+                            {property.verified !== false && <VerifiedBadge label="Hôte vérifié" />}
+                          </div>
+                          <p className="text-xs text-gray-400">Annonce validée AXXAM</p>
                         </div>
                       </div>
 
@@ -283,13 +289,19 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
                     <button
                       onClick={handleReserveClick}
                       disabled={!canBook || loading}
-                      className="w-full bg-[var(--gold)] text-white py-3 rounded-xl font-bold hover:bg-[var(--gold-deep)] transition-colors mb-3 disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="w-full min-h-12 bg-[var(--gold)] text-white py-3 rounded-xl font-bold hover:bg-[var(--gold-deep)] transition-colors mb-3 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       {canBook ? "Demander la réservation" : "Choisir des dates d'abord"}
                     </button>
-                    <button className="w-full border border-gray-300 text-[var(--navy)] py-3 rounded-xl font-medium hover:border-[var(--navy)] transition-colors text-sm">
-                      Contacter l&apos;hôte
-                    </button>
+                    <a
+                      href={whatsappHref(hostContactMessage(property.name, property.loc))}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mb-3 flex w-full min-h-12 items-center justify-center rounded-xl border border-[#25D366]/50 bg-[#25D366]/10 py-3 text-sm font-bold text-[#128C7E] transition-colors hover:bg-[#25D366]/20"
+                    >
+                      Contacter sur WhatsApp
+                    </a>
+                    <PayOnSiteNotice compact />
                   </div>
                 </div>
               </div>

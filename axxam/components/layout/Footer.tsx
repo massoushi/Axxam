@@ -22,7 +22,7 @@ export default function Footer() {
       return [
         { label: "Connexion", href: "/login" },
         { label: "Créer un compte", href: "/register" },
-        { label: "Devenir hôte", href: "/register" },
+        { label: "Devenir hôte", href: "/publier" },
       ];
     }
 
@@ -82,7 +82,16 @@ export default function Footer() {
       title: "Assistance",
       links: [
         { label: "Messages", href: "/messages" },
-        { label: "Contact", href: "/messages" },
+        { label: "WhatsApp", href: "https://wa.me/213555000000" },
+      ],
+    },
+    {
+      title: "Destinations",
+      links: [
+        { label: "Villa Tipaza", href: "/location/villa-tipaza" },
+        { label: "Alger Hydra", href: "/location/location-alger-hydra" },
+        { label: "Appartement Oran", href: "/location/appartement-oran" },
+        { label: "Zeralda", href: "/location/villa-alger-zeralda" },
       ],
     },
     {
@@ -99,7 +108,7 @@ export default function Footer() {
     <footer className="mt-20 bg-[var(--navy)] text-white">
       <div className="h-1 bg-gradient-to-r from-[var(--gold-deep)] via-[var(--gold)] to-[var(--sand)]" />
       <div className="container mx-auto max-w-6xl px-4 sm:px-6 py-12 sm:py-14">
-        <div className="grid grid-cols-2 gap-10 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-10 md:grid-cols-3 lg:grid-cols-5">
           <div className="col-span-2 md:col-span-1">
             <Logo size={72} onDark />
             <p className="mt-5 font-display text-xl tracking-[0.08em] text-white">
@@ -128,6 +137,15 @@ export default function Footer() {
                       >
                         {link.label}
                       </button>
+                    ) : link.href.startsWith("http") ? (
+                      <a
+                        href={link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-white/55 transition-colors hover:text-white"
+                      >
+                        {link.label}
+                      </a>
                     ) : (
                       <Link
                         href={link.href}

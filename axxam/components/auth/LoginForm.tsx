@@ -24,6 +24,7 @@ export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [needsVerify, setNeedsVerify] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const hint = useMemo(() => "Admin démo : admin@axxam.dz / Admin123!", []);
@@ -31,12 +32,15 @@ export default function LoginForm() {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+    setNeedsVerify(false);
     setLoading(true);
     try {
       const user = await login(email, password);
       router.push(next || dashboardPathForRole(user.role));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Connexion impossible");
+      const msg = err instanceof Error ? err.message : "Connexion impossible";
+      setError(msg);
+      setNeedsVerify(/non vérifié|vérification/i.test(msg));
     } finally {
       setLoading(false);
     }
@@ -79,7 +83,17 @@ export default function LoginForm() {
           </div>
 
           {error && (
-            <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+            <div className="space-y-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              <p>{error}</p>
+              {needsVerify && (
+                <Link
+                  href={`/verifier-email?pending=1&email=${encodeURIComponent(email.trim())}`}
+                  className="inline-block font-semibold underline"
+                >
+                  Vérifier / renvoyer l&apos;e-mail →
+                </Link>
+              )}
+            </div>
           )}
 
           <button

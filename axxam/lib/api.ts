@@ -75,11 +75,34 @@ export async function loginRequest(email: string, password: string) {
   });
 }
 
+export type RegisterResult = {
+  user: AuthUser;
+  requiresVerification?: boolean;
+  emailSent?: boolean;
+  verifyUrl?: string;
+  token?: string;
+};
+
 export async function registerRequest(payload: RegisterPayload) {
-  return request<{ user: AuthUser; token: string }>("/auth/register", {
+  return request<RegisterResult>("/auth/register", {
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+export async function verifyEmailRequest(token: string) {
+  const q = encodeURIComponent(token);
+  return request<{ user: AuthUser }>(`/auth/verify-email?token=${q}`);
+}
+
+export async function resendVerificationRequest(email: string) {
+  return request<{ emailSent?: boolean; verifyUrl?: string; alreadyVerified?: boolean }>(
+    "/auth/resend-verification",
+    {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    }
+  );
 }
 
 export async function fetchMe() {

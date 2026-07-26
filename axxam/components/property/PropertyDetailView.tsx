@@ -14,7 +14,10 @@ import {
 import BookingForm from "@/components/property/BookingForm";
 import { toPublicProperty } from "@/lib/mappers";
 import AuthGateModal from "@/components/auth/AuthGateModal";
+import PayOnSiteNotice from "@/components/trust/PayOnSiteNotice";
+import VerifiedBadge from "@/components/trust/VerifiedBadge";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { hostContactMessage, whatsappHref } from "@/lib/whatsapp";
 
 function typeLabel(value: string) {
   return PROPERTY_TYPES.find((t) => t.value === value)?.label || value;
@@ -301,6 +304,11 @@ export default function PropertyDetailView({ id, fromAdmin = false }: PropertyDe
                 {property.agencyId?.startsWith("proprietaire") ? "Propriétaire" : "Agence"} ·{" "}
                 {property.city}
               </p>
+              {property.status === "active" && (
+                <div className="mt-2">
+                  <VerifiedBadge label="Annonce vérifiée" size="md" />
+                </div>
+              )}
             </div>
           </section>
 
@@ -331,6 +339,8 @@ export default function PropertyDetailView({ id, fromAdmin = false }: PropertyDe
               </div>
             )}
           </section>
+
+          <PayOnSiteNotice />
         </div>
 
         <aside className="space-y-4">
@@ -402,10 +412,21 @@ export default function PropertyDetailView({ id, fromAdmin = false }: PropertyDe
                     }
                     setShowBooking(true);
                   }}
-                  className="mt-3 w-full rounded-lg bg-[var(--gold)] px-4 py-3 text-xs font-bold uppercase tracking-wider text-white disabled:opacity-40"
+                  className="mt-3 w-full min-h-12 rounded-lg bg-[var(--gold)] px-4 py-3 text-xs font-bold uppercase tracking-wider text-white disabled:opacity-40"
                 >
                   {checkIn && checkOut ? "Demander la réservation" : "Choisir des dates d'abord"}
                 </button>
+                <a
+                  href={whatsappHref(hostContactMessage(property.name, property.loc))}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 flex w-full min-h-12 items-center justify-center rounded-lg border border-[#25D366]/40 bg-[#25D366]/10 px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#128C7E]"
+                >
+                  WhatsApp
+                </a>
+                <div className="mt-3">
+                  <PayOnSiteNotice compact />
+                </div>
               </>
             )}
 

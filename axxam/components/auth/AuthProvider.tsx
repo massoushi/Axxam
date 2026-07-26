@@ -18,7 +18,12 @@ type AuthContextValue = {
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<AuthUser>;
-  register: (payload: RegisterPayload) => Promise<AuthUser>;
+  register: (payload: RegisterPayload) => Promise<{
+    user: AuthUser;
+    requiresVerification: boolean;
+    emailSent?: boolean;
+    verifyUrl?: string;
+  }>;
   updateProfile: (payload: UpdateProfilePayload) => Promise<AuthUser>;
   logout: () => void;
   refresh: () => Promise<void>;
@@ -99,10 +104,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = useCallback(async (payload: RegisterPayload) => {
     const res = await registerRequest(payload);
-    setSession(res.data.token, res.data.user);
-    setUser(res.data.user);
-    setToken(res.data.token);
-    return res.data.user;
+    const requiresVerification = Boolean(res.data.requiresVerification || !res.data.token);
+    // Pas de session tant que l'e-mail n'est pas vérifié
+    if (!requiresVerification && res.data.token) {
+      setSession(res.data.token, res.data.user);
+      setUser(res.data.user);
+      setToken(res.data.token);
+    }
+    return {
+      user: res.data.user,
+      requiresVerification,
+      emailSent: res.data.emailSent,
+      verifyUrl: res.data.verifyUrl,
+    };
   }, []);
 
   const updateProfile = useCallback(async (payload: UpdateProfilePayload) => {

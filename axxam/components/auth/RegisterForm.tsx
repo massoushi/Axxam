@@ -111,8 +111,17 @@ export default function RegisterForm() {
 
     setLoading(true);
     try {
-      const user = await register(payload);
-      router.push(dashboardPathForRole(user.role));
+      const result = await register(payload);
+      if (result.requiresVerification) {
+        const params = new URLSearchParams({
+          pending: "1",
+          email: result.user.email,
+        });
+        if (result.verifyUrl) params.set("dev", result.verifyUrl);
+        router.push(`/verifier-email?${params.toString()}`);
+        return;
+      }
+      router.push(dashboardPathForRole(result.user.role));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Inscription impossible");
     } finally {

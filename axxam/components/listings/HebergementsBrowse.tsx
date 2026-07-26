@@ -7,6 +7,8 @@ import SiteShell from "@/components/layout/SiteShell";
 import PropertyImage from "@/components/ui/PropertyImage";
 import PropertyModal from "@/components/property/PropertyModal";
 import AuthGateModal from "@/components/auth/AuthGateModal";
+import CoastMap from "@/components/map/CoastMap";
+import PayOnSiteNotice from "@/components/trust/PayOnSiteNotice";
 import { useFavorites } from "@/hooks/useFavorites";
 import { fetchProperties } from "@/lib/api";
 import { toPublicProperties } from "@/lib/mappers";
@@ -23,6 +25,7 @@ const STAY_CHIPS = [
   { value: "maison", label: "Maison" },
   { value: "studio", label: "Studio" },
   { value: "piscine", label: "Piscine" },
+  { value: "famille", label: "Famille" },
 ] as const;
 
 const PRICE_NIGHT = [
@@ -41,6 +44,19 @@ const GUESTS = [
   { value: "8", label: "8+" },
 ] as const;
 
+function rangeOverlapsUnavailable(checkIn: string, checkOut: string, unavailable: string[]) {
+  if (!checkIn || !checkOut) return false;
+  const start = new Date(checkIn);
+  const end = new Date(checkOut);
+  if (!(start < end)) return true;
+  const blocked = new Set(unavailable || []);
+  for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
+    const key = d.toISOString().slice(0, 10);
+    if (blocked.has(key)) return true;
+  }
+  return false;
+}
+
 export default function HebergementsBrowse() {
   const searchParams = useSearchParams();
   const { favorites, toggleFavorite, authRequired, clearAuthGate } = useFavorites();
@@ -50,12 +66,17 @@ export default function HebergementsBrowse() {
   const [maxPrice, setMaxPrice] = useState("");
   const [guests, setGuests] = useState(searchParams.get("guests") || "");
   const [q, setQ] = useState("");
+  const [checkIn, setCheckIn] = useState("");
+  const [checkOut, setCheckOut] = useState("");
+  const [showMap, setShowMap] = useState(true);
   const [applied, setApplied] = useState({
     city: searchParams.get("city") || "",
     chip: "",
     maxPrice: "",
     guests: searchParams.get("guests") || "",
     q: "",
+    checkIn: "",
+    checkOut: "",
   });
 
   const [listings, setListings] = useState<Property[]>([]);
@@ -72,8 +93,11 @@ export default function HebergementsBrowse() {
         priceUnit: "nuit",
       };
       if (applied.city) params.city = applied.city;
-      if (applied.chip && applied.chip !== "piscine") params.type = applied.chip;
+      if (applied.chip && applied.chip !== "piscine" && applied.chip !== "famille") {
+        params.type = applied.chip;
+      }
       if (applied.chip === "piscine") params.category = "piscine-privee";
+      if (applied.chip === "famille") params.category = "famille";
       if (applied.maxPrice) params.maxPrice = applied.maxPrice;
 
       const res = await fetchProperties(params);
@@ -90,9 +114,23 @@ export default function HebergementsBrowse() {
           p.type !== "bureau"
       );
 
+      if (applied.chip === "piscine") {
+        data = data.filter(
+          (p) =>
+            p.category === "piscine-privee" ||
+            p.amenities.some((a) => /piscine/i.test(a))
+        );
+      }
+
       if (applied.guests) {
         const min = Number(applied.guests);
         data = data.filter((p) => (p.capacity || 0) >= min);
+      }
+
+      if (applied.checkIn && applied.checkOut) {
+        data = data.filter(
+          (p) => !rangeOverlapsUnavailable(applied.checkIn, applied.checkOut, p.unavailableDates || [])
+        );
       }
 
       if (applied.q.trim()) {
@@ -101,7 +139,8 @@ export default function HebergementsBrowse() {
           (p) =>
             p.name.toLowerCase().includes(needle) ||
             p.loc.toLowerCase().includes(needle) ||
-            p.description.toLowerCase().includes(needle)
+            p.description.toLowerCase().includes(needle) ||
+            p.amenities.some((a) => a.toLowerCase().includes(needle))
         );
       }
 
@@ -128,11 +167,13 @@ export default function HebergementsBrowse() {
   }, [selectedProperty]);
 
   const apply = (patch?: Partial<typeof applied>) => {
-    const next = { city, chip, maxPrice, guests, q, ...patch };
+    const next = { city, chip, maxPrice, guests, q, checkIn, checkOut, ...patch };
     if (patch?.city !== undefined) setCity(patch.city);
     if (patch?.chip !== undefined) setChip(patch.chip);
     if (patch?.maxPrice !== undefined) setMaxPrice(patch.maxPrice);
     if (patch?.guests !== undefined) setGuests(patch.guests);
+    if (patch?.checkIn !== undefined) setCheckIn(patch.checkIn);
+    if (patch?.checkOut !== undefined) setCheckOut(patch.checkOut);
     setApplied(next);
   };
 
@@ -142,12 +183,22 @@ export default function HebergementsBrowse() {
     setMaxPrice("");
     setGuests("");
     setQ("");
-    setApplied({ city: "", chip: "", maxPrice: "", guests: "", q: "" });
+    setCheckIn("");
+    setCheckOut("");
+    setApplied({ city: "", chip: "", maxPrice: "", guests: "", q: "", checkIn: "", checkOut: "" });
   };
 
   const hasFilters = useMemo(
     () =>
-      Boolean(applied.city || applied.chip || applied.maxPrice || applied.guests || applied.q),
+      Boolean(
+        applied.city ||
+          applied.chip ||
+          applied.maxPrice ||
+          applied.guests ||
+          applied.q ||
+          applied.checkIn ||
+          applied.checkOut
+      ),
     [applied]
   );
 
@@ -188,7 +239,7 @@ export default function HebergementsBrowse() {
               e.preventDefault();
               apply();
             }}
-            className="mt-8 grid gap-2 rounded-2xl border border-[var(--sand)]/20 bg-white p-3 text-[var(--ink)] shadow-[var(--shadow-lift)] sm:grid-cols-[1.1fr_1fr_1fr_1.1fr_auto]"
+            className="mt-8 grid gap-2 rounded-2xl border border-[var(--sand)]/20 bg-white p-3 text-[var(--ink)] shadow-[var(--shadow-lift)] sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6"
           >
             <label className="block">
               <span className="mb-1 block px-1 text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
@@ -206,6 +257,30 @@ export default function HebergementsBrowse() {
                   </option>
                 ))}
               </select>
+            </label>
+
+            <label className="block">
+              <span className="mb-1 block px-1 text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
+                Arrivée
+              </span>
+              <input
+                type="date"
+                value={checkIn}
+                onChange={(e) => setCheckIn(e.target.value)}
+                className="w-full rounded-xl border border-black/8 bg-[var(--surface)] px-3 py-2.5 text-sm outline-none focus:border-[var(--gold)]"
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-1 block px-1 text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
+                Départ
+              </span>
+              <input
+                type="date"
+                value={checkOut}
+                onChange={(e) => setCheckOut(e.target.value)}
+                className="w-full rounded-xl border border-black/8 bg-[var(--surface)] px-3 py-2.5 text-sm outline-none focus:border-[var(--gold)]"
+              />
             </label>
 
             <label className="block">
@@ -242,31 +317,34 @@ export default function HebergementsBrowse() {
               </select>
             </label>
 
-            <label className="block">
-              <span className="mb-1 block px-1 text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
-                Recherche
-              </span>
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Plage, Tipaza, piscine…"
-                className="w-full rounded-xl border border-black/8 bg-[var(--surface)] px-3 py-2.5 text-sm outline-none focus:border-[var(--gold)]"
-              />
-            </label>
-
-            <div className="flex items-end">
+            <div className="flex items-end gap-2 sm:col-span-2 xl:col-span-1">
+              <label className="block min-w-0 flex-1">
+                <span className="mb-1 block px-1 text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
+                  Recherche
+                </span>
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Plage, Tipaza…"
+                  className="w-full rounded-xl border border-black/8 bg-[var(--surface)] px-3 py-2.5 text-sm outline-none focus:border-[var(--gold)]"
+                />
+              </label>
               <button
                 type="submit"
-                className="w-full rounded-xl bg-[var(--gold)] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white sm:min-w-[110px]"
+                className="min-h-[42px] shrink-0 rounded-xl bg-[var(--gold)] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white"
               >
-                Chercher
+                OK
               </button>
             </div>
           </form>
         </div>
       </section>
 
-      <section className="container mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <section className="container mx-auto max-w-6xl px-4 py-8 pb-28 sm:px-6">
+        <div className="mb-6">
+          <PayOnSiteNotice compact />
+        </div>
+
         <div className="mb-6 flex gap-2 overflow-x-auto pb-1 no-scrollbar">
           {STAY_CHIPS.map((c) => {
             const active = applied.chip === c.value;
@@ -293,7 +371,14 @@ export default function HebergementsBrowse() {
               ? "Recherche en cours…"
               : `${listings.length} hébergement${listings.length !== 1 ? "s" : ""} à la nuit`}
           </p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setShowMap((v) => !v)}
+              className="rounded-full border border-black/10 px-4 py-2 text-[11px] font-bold uppercase tracking-wider text-[var(--navy)]"
+            >
+              {showMap ? "Masquer carte" : "Voir carte"}
+            </button>
             {hasFilters && (
               <button
                 type="button"
@@ -311,6 +396,16 @@ export default function HebergementsBrowse() {
             </Link>
           </div>
         </div>
+
+        {showMap && (
+          <div className="mb-8">
+            <CoastMap
+              listings={listings}
+              cityFilter={applied.city || undefined}
+              onSelect={setSelectedProperty}
+            />
+          </div>
+        )}
 
         {error && (
           <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

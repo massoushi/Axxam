@@ -58,6 +58,12 @@ export type Property = {
   transaction?: string;
   priceUnit?: string;
   priceSuffix?: string;
+  city?: string;
+  agencyId?: string;
+  gpsLat?: number | null;
+  gpsLng?: number | null;
+  /** Annonce / hôte validés AXXAM */
+  verified?: boolean;
 };
 
 export type ListingSection = {

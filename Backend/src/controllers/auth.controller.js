@@ -1,7 +1,9 @@
 import bcrypt from "bcryptjs";
 import { query } from "../config/db.js";
+import { env } from "../config/env.js";
 import { ensureUsersTable, mapUserRow } from "../db/users.js";
 import { signToken } from "../middleware/auth.js";
+import { createVerifyToken, sendMail, verificationEmailContent } from "../services/mail.js";
 
 const ROLES = ["client", "owner", "agency"];
 
@@ -25,8 +27,40 @@ function normalizePhone(phone) {
 
 function validatePhone(phone) {
   const cleaned = normalizePhone(phone).replace(/^\+/, "");
-  // Au moins 8 chiffres (évite les rejets trop stricts côté formulaire)
   return /^\d{8,15}$/.test(cleaned);
+}
+
+function appVerifyUrl(token) {
+  return `${env.publicAppUrl}/verifier-email?token=${encodeURIComponent(token)}`;
+}
+
+async function issueVerificationEmail(userRow) {
+  const token = createVerifyToken();
+  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  await query(
+    `UPDATE users SET email_verify_token = $1, email_verify_expires = $2, email_verified = false WHERE id = $3`,
+    [token, expires.toISOString(), userRow.id]
+  );
+
+  const displayName =
+    userRow.role === "agency"
+      ? userRow.agency_name || "Agence"
+      : [userRow.first_name, userRow.last_name].filter(Boolean).join(" ") || "";
+
+  const verifyUrl = appVerifyUrl(token);
+  const { subject, html, text } = verificationEmailContent({ name: displayName, verifyUrl });
+
+  let emailSent = false;
+  let provider = "none";
+  try {
+    const result = await sendMail({ to: userRow.email, subject, html, text });
+    emailSent = true;
+    provider = result.provider;
+  } catch (err) {
+    console.error("[verify-email] send failed:", err.message);
+  }
+
+  return { verifyUrl, emailSent, provider };
 }
 
 export async function register(req, res, next) {
@@ -164,10 +198,10 @@ export async function register(req, res, next) {
       `
       INSERT INTO users (
         id, role, email, password_hash, first_name, last_name, phone, wilaya, avatar,
-        agency_name, manager_name, rc_number, nif, address, logo, status
+        agency_name, manager_name, rc_number, nif, address, logo, status, email_verified
       ) VALUES (
         $1,$2,$3,$4,$5,$6,$7,$8,$9,
-        $10,$11,$12,$13,$14,$15,$16
+        $10,$11,$12,$13,$14,$15,$16, false
       )
       RETURNING *
       `,
@@ -191,19 +225,28 @@ export async function register(req, res, next) {
       ]
     );
 
-    const user = mapUserRow(result.rows[0]);
-    const token = signToken(user);
+    const row = result.rows[0];
+    const mail = await issueVerificationEmail(row);
+    const user = mapUserRow({ ...row, email_verified: false });
 
     const messages = {
-      client: "Compte client créé avec succès",
-      owner: "Compte propriétaire créé avec succès",
-      agency: "Compte agence créé. Validation admin requise avant publication.",
+      client: "Compte créé. Vérifiez votre e-mail pour activer la connexion.",
+      owner: "Compte créé. Vérifiez votre e-mail pour activer la connexion.",
+      agency:
+        "Compte agence créé. Vérifiez votre e-mail, puis attendez la validation admin avant publication.",
     };
 
     res.status(201).json({
       success: true,
       message: messages[role],
-      data: { user, token },
+      data: {
+        user,
+        requiresVerification: true,
+        emailSent: mail.emailSent,
+        // Lien exposé seulement en dev / sans SMTP — pratique pour tester sans boîte mail
+        verifyUrl:
+          env.nodeEnv !== "production" || mail.provider === "console" ? mail.verifyUrl : undefined,
+      },
     });
   } catch (err) {
     next(err);
@@ -251,12 +294,117 @@ export async function login(req, res, next) {
       });
     }
 
+    if (!user.emailVerified) {
+      return res.status(403).json({
+        success: false,
+        code: "EMAIL_NOT_VERIFIED",
+        message:
+          "E-mail non vérifié. Ouvrez le lien reçu par mail, ou renvoyez un nouveau lien depuis la page de connexion.",
+      });
+    }
+
     const token = signToken(user);
 
     res.json({
       success: true,
       message: "Connexion réussie",
       data: { user, token },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function verifyEmail(req, res, next) {
+  try {
+    await ensureUsersTable();
+
+    const token = String(req.query.token || req.body?.token || "").trim();
+    if (!token) {
+      return res.status(400).json({ success: false, message: "Jeton de vérification manquant" });
+    }
+
+    const result = await query(
+      `SELECT * FROM users WHERE email_verify_token = $1 LIMIT 1`,
+      [token]
+    );
+    const row = result.rows[0];
+    if (!row) {
+      return res.status(400).json({
+        success: false,
+        message: "Lien invalide ou déjà utilisé. Demandez un nouvel e-mail de vérification.",
+      });
+    }
+
+    if (row.email_verify_expires && new Date(row.email_verify_expires) < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: "Lien expiré. Demandez un nouvel e-mail de vérification.",
+      });
+    }
+
+    const updated = await query(
+      `
+      UPDATE users
+      SET email_verified = true, email_verify_token = NULL, email_verify_expires = NULL
+      WHERE id = $1
+      RETURNING *
+      `,
+      [row.id]
+    );
+
+    const user = mapUserRow(updated.rows[0]);
+
+    res.json({
+      success: true,
+      message: "E-mail vérifié. Vous pouvez vous connecter.",
+      data: { user },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function resendVerification(req, res, next) {
+  try {
+    await ensureUsersTable();
+
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    if (!email || !validateEmail(email)) {
+      return res.status(400).json({ success: false, message: "Adresse e-mail invalide" });
+    }
+
+    const result = await query(`SELECT * FROM users WHERE LOWER(email) = $1 LIMIT 1`, [email]);
+    const row = result.rows[0];
+
+    // Réponse neutre pour ne pas révéler si l'email existe
+    if (!row) {
+      return res.json({
+        success: true,
+        message: "Si un compte existe pour cet e-mail, un lien de vérification a été envoyé.",
+      });
+    }
+
+    if (row.email_verified) {
+      return res.json({
+        success: true,
+        message: "Cet e-mail est déjà vérifié. Vous pouvez vous connecter.",
+        data: { alreadyVerified: true },
+      });
+    }
+
+    const mail = await issueVerificationEmail(row);
+
+    res.json({
+      success: true,
+      message: mail.emailSent
+        ? "Un nouvel e-mail de vérification a été envoyé."
+        : "Lien généré (e-mail non configuré côté serveur — voir verifyUrl en développement).",
+      data: {
+        emailSent: mail.emailSent,
+        verifyUrl:
+          env.nodeEnv !== "production" || mail.provider === "console" ? mail.verifyUrl : undefined,
+      },
     });
   } catch (err) {
     next(err);
@@ -439,7 +587,7 @@ export async function listUsers(req, res, next) {
     const result = await query(
       `SELECT id, role, email, first_name, last_name, phone, wilaya, avatar,
               agency_name, manager_name, rc_number, nif, address, logo, status,
-              subscription_plan, commission_rate, created_at
+              subscription_plan, commission_rate, email_verified, created_at
        FROM users ${where}
        ORDER BY created_at DESC`,
       params

@@ -27,9 +27,13 @@ export const ensureUsersTable = once(async () => {
 
   await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_plan TEXT NOT NULL DEFAULT 'free';`);
   await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS commission_rate NUMERIC NOT NULL DEFAULT 0.05;`);
+  await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT true`);
+  await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verify_token TEXT`);
+  await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verify_expires TIMESTAMPTZ`);
 
   await query(`CREATE INDEX IF NOT EXISTS idx_users_email ON users (LOWER(email));`);
   await query(`CREATE INDEX IF NOT EXISTS idx_users_role ON users (role);`);
+  await query(`CREATE INDEX IF NOT EXISTS idx_users_verify_token ON users (email_verify_token);`);
 
   await seedAdminIfNeeded();
 });
@@ -37,7 +41,13 @@ export const ensureUsersTable = once(async () => {
 async function seedAdminIfNeeded() {
   const email = (process.env.ADMIN_EMAIL || "admin@axxam.dz").toLowerCase();
   const existing = await query(`SELECT id FROM users WHERE LOWER(email) = $1 LIMIT 1`, [email]);
-  if (existing.rows[0]) return;
+  if (existing.rows[0]) {
+    await query(
+      `UPDATE users SET email_verified = true WHERE LOWER(email) = $1 AND email_verified = false`,
+      [email]
+    );
+    return;
+  }
 
   const password = process.env.ADMIN_PASSWORD || "Admin123!";
   const hash = await bcrypt.hash(password, 10);
@@ -46,8 +56,8 @@ async function seedAdminIfNeeded() {
   await query(
     `
     INSERT INTO users (
-      id, role, email, password_hash, first_name, last_name, phone, status
-    ) VALUES ($1, 'admin', $2, $3, 'Admin', 'AXXAM', '', 'active')
+      id, role, email, password_hash, first_name, last_name, phone, status, email_verified
+    ) VALUES ($1, 'admin', $2, $3, 'Admin', 'AXXAM', '', 'active', true)
     `,
     [id, email, hash]
   );
@@ -72,6 +82,7 @@ export function mapUserRow(row) {
     address: row.address || "",
     logo: row.logo || null,
     status: row.status,
+    emailVerified: row.email_verified !== false,
     subscriptionPlan: row.subscription_plan || "free",
     commissionRate: Number(row.commission_rate) || 0.05,
     displayName:

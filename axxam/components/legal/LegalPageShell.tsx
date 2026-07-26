@@ -44,9 +44,17 @@ export function LegalPageShell({
   );
 }
 
-export function LegalSection({ title, children }: { title: string; children: React.ReactNode }) {
+export function LegalSection({
+  title,
+  id,
+  children,
+}: {
+  title: string;
+  id?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <section>
+    <section id={id}>
       <h2 className="font-display text-xl font-semibold text-[var(--navy)]">{title}</h2>
       <div className="mt-3 space-y-3 text-[var(--muted)]">{children}</div>
     </section>
