@@ -90,7 +90,7 @@ export default function LoginForm() {
                   href={`/verifier-email?pending=1&email=${encodeURIComponent(email.trim())}`}
                   className="inline-block font-semibold underline"
                 >
-                  Vérifier / renvoyer l&apos;e-mail →
+                  Saisir / renvoyer le code →
                 </Link>
               )}
             </div>

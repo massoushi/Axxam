@@ -79,7 +79,7 @@ export type RegisterResult = {
   user: AuthUser;
   requiresVerification?: boolean;
   emailSent?: boolean;
-  verifyUrl?: string;
+  devCode?: string;
   token?: string;
 };
 
@@ -90,13 +90,18 @@ export async function registerRequest(payload: RegisterPayload) {
   });
 }
 
-export async function verifyEmailRequest(token: string) {
-  const q = encodeURIComponent(token);
-  return request<{ user: AuthUser }>(`/auth/verify-email?token=${q}`);
+export async function verifyEmailRequest(email: string, code: string) {
+  return request<{ user: AuthUser; token?: string; alreadyVerified?: boolean }>(
+    "/auth/verify-email",
+    {
+      method: "POST",
+      body: JSON.stringify({ email, code }),
+    }
+  );
 }
 
 export async function resendVerificationRequest(email: string) {
-  return request<{ emailSent?: boolean; verifyUrl?: string; alreadyVerified?: boolean }>(
+  return request<{ emailSent?: boolean; devCode?: string; alreadyVerified?: boolean }>(
     "/auth/resend-verification",
     {
       method: "POST",

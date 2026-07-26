@@ -3,7 +3,7 @@ import { query } from "../config/db.js";
 import { env } from "../config/env.js";
 import { ensureUsersTable, mapUserRow } from "../db/users.js";
 import { signToken } from "../middleware/auth.js";
-import { createVerifyToken, sendMail, verificationEmailContent } from "../services/mail.js";
+import { createVerifyCode, sendMail, verificationEmailContent } from "../services/mail.js";
 
 const ROLES = ["client", "owner", "agency"];
 
@@ -30,17 +30,16 @@ function validatePhone(phone) {
   return /^\d{8,15}$/.test(cleaned);
 }
 
-function appVerifyUrl(token) {
-  // Lien principal AXXAM ; /auth/callback existe aussi (compat Redirect URLs Supabase)
-  return `${env.publicAppUrl}/verifier-email?token=${encodeURIComponent(token)}`;
+function normalizeCode(code) {
+  return String(code || "").replace(/\D/g, "").slice(0, 6);
 }
 
 async function issueVerificationEmail(userRow) {
-  const token = createVerifyToken();
-  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const code = createVerifyCode();
+  const expires = new Date(Date.now() + 30 * 60 * 1000); // 30 min
   await query(
     `UPDATE users SET email_verify_token = $1, email_verify_expires = $2, email_verified = false WHERE id = $3`,
-    [token, expires.toISOString(), userRow.id]
+    [code, expires.toISOString(), userRow.id]
   );
 
   const displayName =
@@ -48,8 +47,7 @@ async function issueVerificationEmail(userRow) {
       ? userRow.agency_name || "Agence"
       : [userRow.first_name, userRow.last_name].filter(Boolean).join(" ") || "";
 
-  const verifyUrl = appVerifyUrl(token);
-  const { subject, html, text } = verificationEmailContent({ name: displayName, verifyUrl });
+  const { subject, html, text } = verificationEmailContent({ name: displayName, code });
 
   let emailSent = false;
   let provider = "none";
@@ -61,7 +59,7 @@ async function issueVerificationEmail(userRow) {
     console.error("[verify-email] send failed:", err.message);
   }
 
-  return { verifyUrl, emailSent, provider };
+  return { code, emailSent, provider };
 }
 
 export async function register(req, res, next) {
@@ -244,9 +242,9 @@ export async function register(req, res, next) {
         user,
         requiresVerification: true,
         emailSent: mail.emailSent,
-        // Lien exposé seulement en dev / sans SMTP — pratique pour tester sans boîte mail
-        verifyUrl:
-          env.nodeEnv !== "production" || mail.provider === "console" ? mail.verifyUrl : undefined,
+        // Code visible en test sans SMTP
+        devCode:
+          env.nodeEnv !== "production" || mail.provider === "console" ? mail.code : undefined,
       },
     });
   } catch (err) {
@@ -300,7 +298,7 @@ export async function login(req, res, next) {
         success: false,
         code: "EMAIL_NOT_VERIFIED",
         message:
-          "E-mail non vérifié. Ouvrez le lien reçu par mail, ou renvoyez un nouveau lien depuis la page de connexion.",
+          "E-mail non vérifié. Saisissez le code reçu par e-mail, ou renvoyez un nouveau code.",
       });
     }
 
@@ -320,27 +318,50 @@ export async function verifyEmail(req, res, next) {
   try {
     await ensureUsersTable();
 
-    const token = String(req.query.token || req.body?.token || "").trim();
-    if (!token) {
-      return res.status(400).json({ success: false, message: "Jeton de vérification manquant" });
+    const email = String(req.body?.email || req.query.email || "")
+      .trim()
+      .toLowerCase();
+    const code = normalizeCode(req.body?.code || req.query.code || req.query.token || "");
+
+    if (!email || !validateEmail(email)) {
+      return res.status(400).json({ success: false, message: "Adresse e-mail requise" });
+    }
+    if (code.length !== 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Code invalide. Entrez les 6 chiffres reçus par e-mail.",
+      });
     }
 
-    const result = await query(
-      `SELECT * FROM users WHERE email_verify_token = $1 LIMIT 1`,
-      [token]
-    );
+    const result = await query(`SELECT * FROM users WHERE LOWER(email) = $1 LIMIT 1`, [email]);
     const row = result.rows[0];
     if (!row) {
       return res.status(400).json({
         success: false,
-        message: "Lien invalide ou déjà utilisé. Demandez un nouvel e-mail de vérification.",
+        message: "Code incorrect ou compte introuvable.",
+      });
+    }
+
+    if (row.email_verified) {
+      const user = mapUserRow(row);
+      return res.json({
+        success: true,
+        message: "E-mail déjà vérifié. Vous pouvez vous connecter.",
+        data: { user, alreadyVerified: true },
+      });
+    }
+
+    if (!row.email_verify_token || normalizeCode(row.email_verify_token) !== code) {
+      return res.status(400).json({
+        success: false,
+        message: "Code incorrect. Vérifiez l'e-mail ou renvoyez un nouveau code.",
       });
     }
 
     if (row.email_verify_expires && new Date(row.email_verify_expires) < new Date()) {
       return res.status(400).json({
         success: false,
-        message: "Lien expiré. Demandez un nouvel e-mail de vérification.",
+        message: "Code expiré. Demandez un nouveau code.",
       });
     }
 
@@ -355,11 +376,12 @@ export async function verifyEmail(req, res, next) {
     );
 
     const user = mapUserRow(updated.rows[0]);
+    const token = signToken(user);
 
     res.json({
       success: true,
-      message: "E-mail vérifié. Vous pouvez vous connecter.",
-      data: { user },
+      message: "E-mail vérifié. Vous êtes connecté.",
+      data: { user, token },
     });
   } catch (err) {
     next(err);
@@ -378,11 +400,10 @@ export async function resendVerification(req, res, next) {
     const result = await query(`SELECT * FROM users WHERE LOWER(email) = $1 LIMIT 1`, [email]);
     const row = result.rows[0];
 
-    // Réponse neutre pour ne pas révéler si l'email existe
     if (!row) {
       return res.json({
         success: true,
-        message: "Si un compte existe pour cet e-mail, un lien de vérification a été envoyé.",
+        message: "Si un compte existe pour cet e-mail, un nouveau code a été envoyé.",
       });
     }
 
@@ -399,12 +420,12 @@ export async function resendVerification(req, res, next) {
     res.json({
       success: true,
       message: mail.emailSent
-        ? "Un nouvel e-mail de vérification a été envoyé."
-        : "Lien généré (e-mail non configuré côté serveur — voir verifyUrl en développement).",
+        ? "Un nouveau code a été envoyé par e-mail."
+        : "Code généré (e-mail non configuré — voir devCode en développement).",
       data: {
         emailSent: mail.emailSent,
-        verifyUrl:
-          env.nodeEnv !== "production" || mail.provider === "console" ? mail.verifyUrl : undefined,
+        devCode:
+          env.nodeEnv !== "production" || mail.provider === "console" ? mail.code : undefined,
       },
     });
   } catch (err) {

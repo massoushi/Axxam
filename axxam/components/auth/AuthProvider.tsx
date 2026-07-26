@@ -22,11 +22,12 @@ type AuthContextValue = {
     user: AuthUser;
     requiresVerification: boolean;
     emailSent?: boolean;
-    verifyUrl?: string;
+    devCode?: string;
   }>;
   updateProfile: (payload: UpdateProfilePayload) => Promise<AuthUser>;
   logout: () => void;
   refresh: () => Promise<void>;
+  applySession: (token: string, user: AuthUser) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -105,7 +106,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = useCallback(async (payload: RegisterPayload) => {
     const res = await registerRequest(payload);
     const requiresVerification = Boolean(res.data.requiresVerification || !res.data.token);
-    // Pas de session tant que l'e-mail n'est pas vérifié
     if (!requiresVerification && res.data.token) {
       setSession(res.data.token, res.data.user);
       setUser(res.data.user);
@@ -115,8 +115,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: res.data.user,
       requiresVerification,
       emailSent: res.data.emailSent,
-      verifyUrl: res.data.verifyUrl,
+      devCode: res.data.devCode,
     };
+  }, []);
+
+  const applySession = useCallback((t: string, u: AuthUser) => {
+    setSession(t, u);
+    setUser(u);
+    setToken(t);
   }, []);
 
   const updateProfile = useCallback(async (payload: UpdateProfilePayload) => {
@@ -134,8 +140,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, token, loading, login, register, updateProfile, logout, refresh }),
-    [user, token, loading, login, register, updateProfile, logout, refresh]
+    () => ({
+      user,
+      token,
+      loading,
+      login,
+      register,
+      updateProfile,
+      logout,
+      refresh,
+      applySession,
+    }),
+    [user, token, loading, login, register, updateProfile, logout, refresh, applySession]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

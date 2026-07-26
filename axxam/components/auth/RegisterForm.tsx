@@ -117,7 +117,7 @@ export default function RegisterForm() {
           pending: "1",
           email: result.user.email,
         });
-        if (result.verifyUrl) params.set("dev", result.verifyUrl);
+        if (result.devCode) params.set("devCode", result.devCode);
         router.push(`/verifier-email?${params.toString()}`);
         return;
       }
