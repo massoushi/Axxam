@@ -79,7 +79,6 @@ export type RegisterResult = {
   user: AuthUser;
   requiresVerification?: boolean;
   emailSent?: boolean;
-  devCode?: string;
   token?: string;
 };
 
@@ -101,7 +100,7 @@ export async function verifyEmailRequest(email: string, code: string) {
 }
 
 export async function resendVerificationRequest(email: string) {
-  return request<{ emailSent?: boolean; devCode?: string; alreadyVerified?: boolean }>(
+  return request<{ emailSent?: boolean; alreadyVerified?: boolean }>(
     "/auth/resend-verification",
     {
       method: "POST",

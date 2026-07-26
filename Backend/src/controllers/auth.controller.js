@@ -241,10 +241,7 @@ export async function register(req, res, next) {
       data: {
         user,
         requiresVerification: true,
-        emailSent: mail.emailSent,
-        // Code visible en test sans SMTP
-        devCode:
-          env.nodeEnv !== "production" || mail.provider === "console" ? mail.code : undefined,
+        emailSent: mail.emailSent && mail.provider !== "console",
       },
     });
   } catch (err) {
@@ -419,13 +416,11 @@ export async function resendVerification(req, res, next) {
 
     res.json({
       success: true,
-      message: mail.emailSent
+      message: mail.emailSent && mail.provider !== "console"
         ? "Un nouveau code a été envoyé par e-mail."
-        : "Code généré (e-mail non configuré — voir devCode en développement).",
+        : "Impossible d'envoyer l'e-mail. Vérifiez la config Resend/SMTP du serveur.",
       data: {
-        emailSent: mail.emailSent,
-        devCode:
-          env.nodeEnv !== "production" || mail.provider === "console" ? mail.code : undefined,
+        emailSent: mail.emailSent && mail.provider !== "console",
       },
     });
   } catch (err) {

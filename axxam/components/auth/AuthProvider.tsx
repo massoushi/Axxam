@@ -22,7 +22,6 @@ type AuthContextValue = {
     user: AuthUser;
     requiresVerification: boolean;
     emailSent?: boolean;
-    devCode?: string;
   }>;
   updateProfile: (payload: UpdateProfilePayload) => Promise<AuthUser>;
   logout: () => void;
@@ -115,7 +114,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: res.data.user,
       requiresVerification,
       emailSent: res.data.emailSent,
-      devCode: res.data.devCode,
     };
   }, []);
 

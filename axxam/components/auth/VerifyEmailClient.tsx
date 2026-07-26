@@ -15,7 +15,6 @@ export default function VerifyEmailClient() {
 
   const [email, setEmail] = useState(searchParams.get("email") || "");
   const [code, setCode] = useState("");
-  const [devCode, setDevCode] = useState(searchParams.get("devCode") || "");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -65,7 +64,6 @@ export default function VerifyEmailClient() {
     try {
       const res = await resendVerificationRequest(email.trim());
       setMessage(res.message || "Nouveau code envoyé");
-      if (res.data?.devCode) setDevCode(res.data.devCode);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Envoi impossible");
     } finally {
@@ -125,13 +123,6 @@ export default function VerifyEmailClient() {
         )}
         {message && !error && (
           <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{message}</p>
-        )}
-
-        {devCode && (
-          <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            Mode test (pas de SMTP) — code :{" "}
-            <strong className="tracking-widest">{devCode}</strong>
-          </p>
         )}
 
         <button
