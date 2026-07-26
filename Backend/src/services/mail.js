@@ -1,28 +1,36 @@
 import crypto from "crypto";
+import { Resend } from "resend";
 import { env } from "../config/env.js";
 
 /**
- * Envoi d'e-mails AXXAM.
- * - RESEND_API_KEY ou SMTP_* → envoi réel
- * - Sinon → log console (dev) ; le code est aussi renvoyé dans la réponse API
+ * Envoi d'e-mails AXXAM via Resend (SDK) ou SMTP.
+ * Sans config → log console (dev) ; le code est aussi renvoyé dans la réponse API.
  */
 export async function sendMail({ to, subject, html, text }) {
-  const from = env.smtpFrom || "AXXAM <noreply@axxam.dz>";
+  const from =
+    env.smtpFrom ||
+    (env.resendApiKey ? "AXXAM <onboarding@resend.dev>" : "AXXAM <noreply@axxam.dz>");
+
+  if (!env.resendApiKey && !(env.smtpHost && env.smtpUser && env.smtpPass)) {
+    console.warn(
+      "[mail] Aucun RESEND_API_KEY / SMTP configuré → e-mail non envoyé (mode console)."
+    );
+  }
 
   if (env.resendApiKey) {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${env.resendApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ from, to: [to], subject, html, text }),
+    const resend = new Resend(env.resendApiKey);
+    const { data, error } = await resend.emails.send({
+      from,
+      to: [to],
+      subject,
+      html,
+      text,
     });
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(`Resend error ${res.status}: ${body}`);
+    if (error) {
+      throw new Error(`Resend error: ${error.message || JSON.stringify(error)}`);
     }
-    return { ok: true, provider: "resend" };
+    console.log(`[mail] Resend OK → ${to} (id: ${data?.id || "?"})`);
+    return { ok: true, provider: "resend", id: data?.id };
   }
 
   if (env.smtpHost && env.smtpUser && env.smtpPass) {
