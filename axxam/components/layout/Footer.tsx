@@ -82,7 +82,7 @@ export default function Footer() {
       title: "Assistance",
       links: [
         { label: "Messages", href: "/messages" },
-        { label: "WhatsApp", href: "https://wa.me/213555000000" },
+        { label: "WhatsApp", href: "https://wa.me/213778843943" },
       ],
     },
     {

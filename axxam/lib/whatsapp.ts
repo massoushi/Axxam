@@ -1,6 +1,6 @@
 /** Contact support AXXAM (indicatif Algérie). Surcharge via NEXT_PUBLIC_WHATSAPP. */
 export const WHATSAPP_SUPPORT =
-  (typeof process !== "undefined" && process.env.NEXT_PUBLIC_WHATSAPP) || "213555000000";
+  (typeof process !== "undefined" && process.env.NEXT_PUBLIC_WHATSAPP) || "213778843943";
 
 export function whatsappHref(message?: string, phone = WHATSAPP_SUPPORT) {
   const digits = String(phone).replace(/\D/g, "");
